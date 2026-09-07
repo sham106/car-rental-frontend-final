@@ -1,0 +1,6 @@
+{
+  "name": "Oceane Car Rental & Fleet Operations",
+  "description": "Professional fleet operations and car rental management system with real-time fleet tracking, booking workflows, maintenance, compliance, and public vehicle website.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
