@@ -26,8 +26,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   children,
 }) => {
   const effectiveTab = currentTab || activeTab || 'dashboard';
-  const { vehicles, refreshAll } = useAdminData();
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const { vehicles, refreshAll, actionError } = useAdminData();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => window.matchMedia('(max-width: 767px)').matches);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
 
@@ -54,6 +54,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         {/* Dynamic page content */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto space-y-6">
+            {actionError && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{actionError}</p>}
             {children}
           </div>
         </main>

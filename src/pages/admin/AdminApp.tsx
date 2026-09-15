@@ -22,6 +22,7 @@ import { VehicleProfileModal } from './VehicleProfileModal';
 import { ChangeStatusModal } from '../../components/admin/ChangeStatusModal';
 import { AdminErrorBoundary } from '../../components/admin/AdminErrorBoundary';
 import { AdminVehicle } from '../../types/admin';
+import { NotFoundPage } from '../NotFoundPage';
 
 const normalizeTab = (raw: string): string => {
   const clean = (raw || '').toLowerCase().trim();
@@ -40,7 +41,7 @@ const normalizeTab = (raw: string): string => {
   if (clean === 'users-roles' || clean === 'users') return 'users-roles';
   if (clean === 'audit' || clean === 'logs') return 'audit';
   if (clean === 'settings' || clean === 'config') return 'settings';
-  return clean;
+  return 'not-found';
 };
 
 const AdminContent: React.FC = () => {
@@ -145,6 +146,7 @@ const AdminContent: React.FC = () => {
         {activeTab === 'audit' && <AdminAuditView />}
 
         {activeTab === 'settings' && <SystemSettingsView />}
+        {activeTab === 'not-found' && <NotFoundPage />}
       </AdminErrorBoundary>
 
       {/* Global Add / Edit Vehicle Modal */}

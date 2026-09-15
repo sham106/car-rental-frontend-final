@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Upload, FileSpreadsheet, Download, CheckCircle2, AlertTriangle, ArrowRight, RefreshCw, Car } from 'lucide-react';
 import { useAdminData } from '../../context/AdminDataContext';
 import { adminImportService, ParsedImportRow } from '../../services/admin/adminImportService';
@@ -12,12 +12,8 @@ export const ExcelImportView: React.FC = () => {
 
   const existingRegs = vehicles.map((v) => v.registrationNumber);
 
-  const handleLoadSample = () => {
-    const sample = adminImportService.generateSampleRows();
-    const validated = adminImportService.validateRows(sample, existingRegs);
-    setParsedRows(validated);
-    setImportStatus(null);
-  };
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [importError, setImportError] = useState('');
 
   const handleDownloadTemplate = () => {
     const csvContent = adminImportService.getTemplateCSV();
@@ -31,9 +27,13 @@ export const ExcelImportView: React.FC = () => {
     document.body.removeChild(link);
   };
 
-  const handleFileDrop = (e: React.DragEvent<HTMLDivElement> | React.ChangeEvent<HTMLInputElement>) => {
-    // For prototype simulation, load and parse sample data with realistic feedback
-    handleLoadSample();
+  const handleFileDrop = async (e: React.DragEvent<HTMLDivElement> | React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const file = 'dataTransfer' in e ? e.dataTransfer.files[0] : e.target.files?.[0];
+    if (!file) return;
+    setImportError(''); setParsedRows([]); setImportStatus(null);
+    try { setParsedRows(await adminImportService.parseFile(file)); }
+    catch(e) { setImportError(e instanceof Error ? e.message : 'Unable to read spreadsheet.'); }
   };
 
   const handleConfirmImport = async () => {
@@ -43,7 +43,7 @@ export const ExcelImportView: React.FC = () => {
       await refreshAll();
       setImportStatus(`Successfully imported ${res.importedCount} vehicles into active fleet!`);
       setParsedRows([]);
-    } finally {
+    } catch (e) { setImportError(e instanceof Error ? e.message : 'Import failed. No vehicles were saved.'); } finally {
       setIsImporting(false);
     }
   };
@@ -74,22 +74,24 @@ export const ExcelImportView: React.FC = () => {
           </button>
           <button
             type="button"
-            onClick={handleLoadSample}
+            onClick={() => fileInput.current?.click()}
             className="px-3.5 py-2 text-xs font-semibold text-white bg-[#17324D] hover:bg-[#1F4366] rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
           >
             <FileSpreadsheet className="w-4 h-4" />
-            <span>Load Sample Spreadsheet</span>
+            <span>Choose Spreadsheet</span>
           </button>
         </div>
       </div>
 
+      <input ref={fileInput} aria-label="Fleet spreadsheet" type="file" accept=".csv,.xlsx" className="hidden" onChange={handleFileDrop} />
+      {importError && <p role="alert" className="text-sm text-red-700">{importError}</p>}
       {/* Upload Zone */}
       <div
         onDragOver={(e) => e.preventDefault()}
         onDrop={handleFileDrop}
         className="p-8 rounded-xl border-2 border-dashed bg-white text-center hover:bg-[#F9FBFC] transition-colors cursor-pointer"
         style={{ borderColor: ADMIN_THEME.border }}
-        onClick={handleLoadSample}
+        onClick={() => fileInput.current?.click()}
       >
         <div className="mx-auto w-12 h-12 rounded-xl bg-[#F1F4F6] text-[#17324D] flex items-center justify-center mb-3">
           <Upload className="w-6 h-6" />
@@ -101,7 +103,7 @@ export const ExcelImportView: React.FC = () => {
           Supports Mauritian registration formats, chassis VINs, odometer readings, and commercial rates
         </p>
         <div className="mt-3 inline-flex items-center gap-2 text-xs font-medium text-[#35658A]">
-          <span>(Click here to test instant sample parsing)</span>
+          <span>Choose a CSV or XLSX file, up to 500 rows</span>
         </div>
       </div>
 

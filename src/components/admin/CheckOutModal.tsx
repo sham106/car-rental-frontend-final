@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import { uploadFile } from '../../services/api';
+import { useAdminData } from '../../context/AdminDataContext';
+import React, { useState, useRef, useEffect } from 'react';
 import { X, Key, Upload, Camera, Check, AlertCircle } from 'lucide-react';
 import { AdminBooking } from '../../types/admin';
 import { CheckOutInput } from '../../services/admin/adminBookingService';
@@ -21,22 +23,29 @@ export const CheckOutModal: React.FC<CheckOutModalProps> = ({
   const [fuelLevelOut, setFuelLevelOut] = useState('8/8 Full');
   const [conditionNotesOut, setConditionNotesOut] = useState('Vehicle inspected with client. Interior and exterior spotless.');
   const [damageNotesOut, setDamageNotesOut] = useState('No pre-existing damages noted.');
-  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([
-    'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=400&q=80',
-  ]);
+  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
+  const photoInput = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const { vehicles } = useAdminData();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    setUploadedPhotos([]); setError('');
+    setMileageOut(vehicles.find(v=>v.id===booking?.vehicleId)?.mileage ?? 0);
+    setConditionNotesOut(''); setDamageNotesOut('');
+  }, [booking?.id]);
+
   if (!isOpen || !booking) return null;
 
-  const handleSimulateAddPhoto = () => {
-    const samplePhotos = [
-      'https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=400&q=80',
-      'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=400&q=80',
-      'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=400&q=80',
-    ];
-    const nextPhoto = samplePhotos[uploadedPhotos.length % samplePhotos.length];
-    setUploadedPhotos([...uploadedPhotos, nextPhoto]);
+  const handlePhotoFiles = async (files: FileList | null) => {
+    if (!files) return; setUploading(true); setError('');
+    try {
+      const urls:string[]=[];
+      for (const file of Array.from(files)) urls.push((await uploadFile(file,'document')).url);
+      setUploadedPhotos(p=>[...p,...urls]);
+    } catch(e) {setError(e instanceof Error?e.message:'Unable to upload inspection photos.');}
+    finally {setUploading(false);}
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -93,7 +102,9 @@ export const CheckOutModal: React.FC<CheckOutModalProps> = ({
           </button>
         </div>
 
+        
         <form onSubmit={handleSubmit} className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+<input ref={photoInput} type="file" aria-label="Inspection photos" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={e=>handlePhotoFiles(e.target.files)} />
           {/* Summary Box */}
           <div className="p-4 rounded-lg bg-[#F8F9FA] border border-[#DCE2E6] grid grid-cols-2 gap-4 text-xs">
             <div>
@@ -180,7 +191,7 @@ export const CheckOutModal: React.FC<CheckOutModalProps> = ({
               </label>
               <button
                 type="button"
-                onClick={handleSimulateAddPhoto}
+                onClick={()=>photoInput.current?.click()}
                 className="text-xs text-[#35658A] hover:underline flex items-center gap-1 font-medium cursor-pointer"
               >
                 <Camera className="w-3.5 h-3.5" /> + Add Inspection Photo
@@ -197,7 +208,7 @@ export const CheckOutModal: React.FC<CheckOutModalProps> = ({
               ))}
               <button
                 type="button"
-                onClick={handleSimulateAddPhoto}
+                onClick={()=>photoInput.current?.click()}
                 className="w-20 h-16 rounded-lg border-2 border-dashed border-[#DCE2E6] hover:border-[#35658A] flex flex-col items-center justify-center text-[#65727B] text-[10px] gap-1 flex-shrink-0 cursor-pointer"
               >
                 <Upload className="w-4 h-4" />
@@ -228,7 +239,7 @@ export const CheckOutModal: React.FC<CheckOutModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || uploading}
               className="px-5 py-2 text-sm font-medium text-white bg-[#17324D] hover:bg-[#1F4366] disabled:opacity-50 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
             >
               <Key className="w-4 h-4" />

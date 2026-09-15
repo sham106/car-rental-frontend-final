@@ -31,7 +31,7 @@ export const AdminAuditView: React.FC = () => {
             Operational Audit Trail & Activity Logs
           </h1>
           <p className="text-sm text-[#65727B] mt-0.5">
-            Immutable log of state transitions, status overrides, vehicle check-outs, maintenance records, and permissions
+            Activity history of state transitions, status overrides, vehicle check-outs, maintenance records, and permissions
           </p>
         </div>
       </div>

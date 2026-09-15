@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Calendar, Search, ArrowRight, ArrowLeftRight, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
-import { RENTAL_LOCATIONS } from '../../constants/locations';
+import { useLocations } from '../../hooks/useLocations';
 import { useSearch } from '../../context/SearchContext';
 import { addDays, getTodayString } from '../../utils/dateUtils';
 
@@ -11,6 +11,7 @@ interface QuickSearchProps {
 }
 
 export const QuickSearch: React.FC<QuickSearchProps> = ({ className = '', variant = 'hero' }) => {
+  const RENTAL_LOCATIONS = useLocations();
   const navigate = useNavigate();
   const {
     pickupLocationId,

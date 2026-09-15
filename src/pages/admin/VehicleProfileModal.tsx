@@ -48,8 +48,8 @@ export const VehicleProfileModal: React.FC<VehicleProfileModalProps> = ({
   const vehicleAudit = auditLogs.filter((l) => l.targetEntityId === vehicle.id || l.details.includes(vehicle.registrationNumber));
 
   const totalEarnings = vehicleBookings
-    .filter((b) => b.bookingStatus === 'completed' || b.bookingStatus === 'active')
-    .reduce((sum, b) => sum + (b.finalAmount || b.estimatedAmount), 0);
+    .filter((b) => b.bookingStatus === 'completed')
+    .reduce((sum, b) => sum + (b.finalAmount ?? b.estimatedAmount), 0);
 
   const totalMaintenanceCost = vehicleMaintenance.reduce((sum, m) => sum + m.totalCost, 0);
 
@@ -369,7 +369,7 @@ export const VehicleProfileModal: React.FC<VehicleProfileModalProps> = ({
                         <td className="py-2.5 font-mono font-semibold text-[#35658A]">{b.reference}</td>
                         <td className="py-2.5 font-medium">{b.customerName}</td>
                         <td className="py-2.5">{b.pickupDate} → {b.returnDate} ({b.days} days)</td>
-                        <td className="py-2.5 font-semibold">Rs {(b.finalAmount || b.estimatedAmount).toLocaleString()}</td>
+                        <td className="py-2.5 font-semibold">Rs {(b.finalAmount ?? b.estimatedAmount).toLocaleString()}</td>
                         <td className="py-2.5 text-right capitalize font-medium">{b.bookingStatus}</td>
                       </tr>
                     ))}

@@ -1,4 +1,6 @@
 node_modules/
+.npm-cache/
+.review-tools/
 build/
 dist/
 coverage/

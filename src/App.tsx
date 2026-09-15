@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { SearchProvider } from './context/SearchContext';
 import { RootLayout } from './layouts/RootLayout';
@@ -17,15 +17,28 @@ import { ContactPage } from './pages/ContactPage';
 import { FaqPage } from './pages/FaqPage';
 import { RentalTermsPage } from './pages/RentalTermsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
-import { AdminApp } from './pages/admin/AdminApp';
+import { AdminAuthProvider } from './context/AdminAuthContext';
+import { RequireAdmin } from './components/admin/RequireAdmin';
+import { AdminLoginPage } from './pages/admin/AdminLoginPage';
+import { AdminForgotPasswordPage } from './pages/admin/AdminForgotPasswordPage';
+import { AdminResetPasswordPage } from './pages/admin/AdminResetPasswordPage';
+const AdminApp = lazy(() => import('./pages/admin/AdminApp').then(module => ({ default: module.AdminApp })));
 
 export default function App() {
   return (
     <SearchProvider>
       <BrowserRouter>
+        <Suspense fallback={<div role="status" className="p-8 text-center">Loading administration...</div>}>
         <Routes>
-          <Route path="/admin/*" element={<AdminApp />} />
-          <Route path="/admin" element={<AdminApp />} />
+          <Route path="/admin" element={<AdminAuthProvider />}>
+            <Route path="login" element={<AdminLoginPage />} />
+            <Route path="forgot-password" element={<AdminForgotPasswordPage />} />
+            <Route path="reset-password" element={<AdminResetPasswordPage />} />
+            <Route element={<RequireAdmin />}>
+              <Route index element={<AdminApp />} />
+              <Route path="*" element={<AdminApp />} />
+            </Route>
+          </Route>
           <Route element={<RootLayout />}>
             <Route path="/" element={<HomePage />} />
             <Route path="/fleet" element={<FleetPage />} />
@@ -39,6 +52,7 @@ export default function App() {
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>
+        </Suspense>
       </BrowserRouter>
     </SearchProvider>
   );

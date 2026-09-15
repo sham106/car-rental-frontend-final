@@ -1,3 +1,4 @@
+import { uploadFile } from '../../services/api';
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Car, Upload, Plus, Trash2, AlertCircle, Check, Image as ImageIcon, Star, Loader2, Link as LinkIcon, RotateCcw } from 'lucide-react';
 import { AdminVehicle, AdminCategory, AdminOperationalStatus } from '../../types/admin';
@@ -21,13 +22,13 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
   const { owners } = useAdminData();
 
   // Form Fields
-  const [brand, setBrand] = useState('Toyota');
-  const [model, setModel] = useState('Corolla Cross Hybrid');
-  const [year, setYear] = useState<number>(2024);
-  const [color, setColor] = useState('Pearl White');
-  const [registrationNumber, setRegistrationNumber] = useState('1842 OC 24');
-  const [vin, setVin] = useState('MR0BA3CD209481920');
-  const [engineNumber, setEngineNumber] = useState('2ZR-FXE-991204');
+  const [brand, setBrand] = useState('');
+  const [model, setModel] = useState('');
+  const [year, setYear] = useState<number>(new Date().getFullYear());
+  const [color, setColor] = useState('');
+  const [registrationNumber, setRegistrationNumber] = useState('');
+  const [vin, setVin] = useState('');
+  const [engineNumber, setEngineNumber] = useState('');
   const [category, setCategory] = useState<AdminCategory>('suv');
   const [seats, setSeats] = useState<number>(5);
   const [luggageCapacity, setLuggageCapacity] = useState<number>(3);
@@ -38,19 +39,19 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
 
   // Commercial
   const [dailyRate, setDailyRate] = useState<number>(2200);
-  const [ownerId, setOwnerId] = useState('own-01');
-  const [purchaseValue, setPurchaseValue] = useState<number>(1450000);
-  const [currentValue, setCurrentValue] = useState<number>(1300000);
-  const [purchaseDate, setPurchaseDate] = useState('2024-03-15');
+  const [ownerId, setOwnerId] = useState('');
+  const [purchaseValue, setPurchaseValue] = useState<number>(0);
+  const [currentValue, setCurrentValue] = useState<number>(0);
+  const [purchaseDate, setPurchaseDate] = useState('');
 
   // Operational
-  const [mileage, setMileage] = useState<number>(12000);
+  const [mileage, setMileage] = useState<number>(0);
   const [nextServiceMileage, setNextServiceMileage] = useState<number>(20000);
   const [operationalStatus, setOperationalStatus] = useState<AdminOperationalStatus>('available');
   const [published, setPublished] = useState(true);
   const [featured, setFeatured] = useState(false);
   const [description, setDescription] = useState(
-    'Premium hybrid crossover with outstanding fuel economy and spacious comfort across Mauritius.'
+    ''
   );
 
   const [photos, setPhotos] = useState<string[]>(
@@ -86,9 +87,9 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
       setAirConditioning(vehicleToEdit.airConditioning);
       setDailyRate(vehicleToEdit.dailyRate);
       setOwnerId(vehicleToEdit.ownerId);
-      setPurchaseValue(vehicleToEdit.purchaseValue || 1000000);
-      setCurrentValue(vehicleToEdit.currentValue || 900000);
-      setPurchaseDate(vehicleToEdit.purchaseDate || '2024-01-01');
+      setPurchaseValue(vehicleToEdit.purchaseValue ?? 0);
+      setCurrentValue(vehicleToEdit.currentValue ?? 0);
+      setPurchaseDate(vehicleToEdit.purchaseDate || '');
       setMileage(vehicleToEdit.mileage);
       setNextServiceMileage(vehicleToEdit.nextServiceMileage || vehicleToEdit.mileage + 10000);
       setOperationalStatus(vehicleToEdit.operationalStatus);
@@ -101,62 +102,11 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
     }
   }, [vehicleToEdit]);
 
+  useEffect(() => { if (!vehicleToEdit && owners.length && !owners.some(o => o.id === ownerId)) setOwnerId(owners[0].id); }, [owners, vehicleToEdit, ownerId]);
+
   if (!isOpen) return null;
 
-  // Process & compress client-side to keep app lightweight and prevent localStorage exhaustion
-  const processImageFile = (file: File): Promise<string> => {
-    return new Promise((resolve) => {
-      if (!file.type.startsWith('image/')) {
-        resolve('');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const raw = e.target?.result as string;
-        if (!raw) {
-          resolve('');
-          return;
-        }
-
-        const img = new Image();
-        img.onload = () => {
-          try {
-            const maxDim = 1280;
-            let width = img.width;
-            let height = img.height;
-
-            if (width > maxDim || height > maxDim) {
-              if (width > height) {
-                height = Math.round((height * maxDim) / width);
-                width = maxDim;
-              } else {
-                width = Math.round((width * maxDim) / height);
-                height = maxDim;
-              }
-            }
-
-            const canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) {
-              resolve(raw);
-              return;
-            }
-            ctx.drawImage(img, 0, 0, width, height);
-            const compressed = canvas.toDataURL('image/jpeg', 0.85);
-            resolve(compressed);
-          } catch {
-            resolve(raw);
-          }
-        };
-        img.onerror = () => resolve(raw);
-        img.src = raw;
-      };
-      reader.onerror = () => resolve('');
-      reader.readAsDataURL(file);
-    });
-  };
+  const processImageFile = async (file: File): Promise<string> => (await uploadFile(file, 'photo')).url;
 
   const handleFilesUpload = async (filesList: FileList | File[]) => {
     const files = Array.from(filesList).filter((f) => f.type.startsWith('image/'));
@@ -170,7 +120,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
         setPhotos((prev) => [...prev, ...processed]);
       }
     } catch (err) {
-      console.error('Error reading files:', err);
+      setError(err instanceof Error ? err.message : 'Unable to upload images.');
     } finally {
       setIsProcessingImages(false);
     }
@@ -210,12 +160,11 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
       const ownerObj = owners.find((o) => o.id === ownerId);
       const ownerName = ownerObj ? ownerObj.name : 'Oceane Fleet Operations Ltd';
 
-      const finalPhotos = photos.length > 0 ? photos : [
-        'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80',
-      ];
+      const finalPhotos = photos;
 
       if (vehicleToEdit) {
         await adminVehicleService.updateVehicle(vehicleToEdit.id, {
+          version: vehicleToEdit.version,
           brand: brand.trim(),
           model: model.trim(),
           year: Number(year),

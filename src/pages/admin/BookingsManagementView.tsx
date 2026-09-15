@@ -1,3 +1,5 @@
+import { NewBookingModal } from '../../components/admin/NewBookingModal';
+import { api } from '../../services/api';
 import React, { useState, useMemo } from 'react';
 import {
   Calendar,
@@ -30,6 +32,7 @@ import { CheckOutModal } from '../../components/admin/CheckOutModal';
 import { CheckInModal } from '../../components/admin/CheckInModal';
 import { ConfirmDialog } from '../../components/admin/ConfirmDialog';
 import { ADMIN_THEME } from '../../constants/adminTheme';
+import { html } from '../../utils/html';
 
 export const BookingsManagementView: React.FC = () => {
   const {
@@ -42,6 +45,8 @@ export const BookingsManagementView: React.FC = () => {
     refreshAll,
   } = useAdminData();
 
+  const [newBookingOpen, setNewBookingOpen] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -63,7 +68,7 @@ export const BookingsManagementView: React.FC = () => {
         ? 'In progress'
         : 'N/A';
 
-    printWindow.document.write(`
+    printWindow.document.write(html`
       <!DOCTYPE html>
       <html>
         <head>
@@ -197,6 +202,8 @@ export const BookingsManagementView: React.FC = () => {
 
   return (
     <div className="space-y-5">
+      {newBookingOpen && <NewBookingModal onClose={()=>setNewBookingOpen(false)} />}
+      <button onClick={()=>setNewBookingOpen(true)} className="rounded-lg bg-[#17324D] text-white px-4 py-2 text-sm">New booking</button>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -559,7 +566,16 @@ export const BookingsManagementView: React.FC = () => {
                     Rs {(viewDetailBooking.finalAmount || viewDetailBooking.estimatedAmount).toLocaleString()}
                   </span>
                   <span className="text-[11px] text-[#4F7D61] font-medium">
-                    {viewDetailBooking.paymentStatus}
+                    {viewDetailBooking.paymentStatus}<form className="mt-3 space-y-2" onSubmit={async e=>{
+                      e.preventDefault();setPaymentError('');const form=new FormData(e.currentTarget);
+                      try { const updated=await api<AdminBooking>(`/admin/bookings/${viewDetailBooking.id}/payment`,{paidAmount:Number(form.get('paidAmount')),reason:String(form.get('reason'))});setViewDetailBooking(updated);await refreshAll(); }
+                      catch(e){setPaymentError(e instanceof Error?e.message:'Unable to record payment.');}
+                    }}>
+                      <label className="block text-xs">Total amount received (MUR)<input name="paidAmount" type="number" min="0" step="0.01" required className="block border rounded p-2 mt-1" defaultValue={viewDetailBooking.paidAmount || 0} /></label>
+                      <label className="block text-xs">Payment note / receipt reference<input name="reason" required className="block border rounded p-2 mt-1" /></label>
+                      <button className="bg-[#17324D] text-white rounded px-3 py-2 text-xs">Record payment</button>
+                      {paymentError && <p role="alert" className="text-red-700 text-xs">{paymentError}</p>}
+                    </form>
                   </span>
                 </div>
 

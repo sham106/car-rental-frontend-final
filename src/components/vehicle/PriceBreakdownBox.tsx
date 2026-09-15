@@ -4,8 +4,8 @@ import { Calendar, MapPin, CheckCircle2, AlertCircle, ShieldCheck, ArrowRight, M
 import { Vehicle } from '../../types/vehicle';
 import { useSearch } from '../../context/SearchContext';
 import { vehicleService } from '../../services/vehicleService';
-import { bookingService } from '../../services/bookingService';
-import { RENTAL_LOCATIONS } from '../../constants/locations';
+import { useQuote } from '../../hooks/useQuote';
+import { useLocations } from '../../hooks/useLocations';
 import { BRAND } from '../../constants/theme';
 import { VehicleAvailabilityCalendar } from './VehicleAvailabilityCalendar';
 
@@ -14,6 +14,7 @@ interface PriceBreakdownBoxProps {
 }
 
 export const PriceBreakdownBox: React.FC<PriceBreakdownBoxProps> = ({ vehicle }) => {
+  const RENTAL_LOCATIONS = useLocations();
   const navigate = useNavigate();
   const {
     pickupLocationId,
@@ -25,6 +26,7 @@ export const PriceBreakdownBox: React.FC<PriceBreakdownBoxProps> = ({ vehicle })
     setPickupDate,
     setReturnDate,
     setSameDayReturn,
+    setSearchParameters,
     isSameDay,
     dateValidation,
     todayStr,
@@ -35,13 +37,8 @@ export const PriceBreakdownBox: React.FC<PriceBreakdownBoxProps> = ({ vehicle })
   const [dateError, setDateError] = useState<string | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
 
-  const pricing = bookingService.calculatePricing(
-    vehicle.dailyRate,
-    pickupDate,
-    returnDate,
-    pickupLocationId,
-    returnLocationId
-  );
+  const {pricing: quote, error: quoteError, loading: quoteLoading} = useQuote(vehicle.id,pickupDate,returnDate,pickupLocationId,returnLocationId);
+  const pricing = quote || {days:0,locationFee:0,vatIncluded:0,estimatedTotal:0};
 
   useEffect(() => {
     let isMounted = true;
@@ -52,7 +49,7 @@ export const PriceBreakdownBox: React.FC<PriceBreakdownBoxProps> = ({ vehicle })
           setAvailability(res);
           setChecking(false);
         }
-      });
+      }).catch((error) => { if (isMounted) { setDateError(error.message); setAvailability(null); setChecking(false); } });
     } else {
       setAvailability(null);
       setChecking(false);
@@ -96,6 +93,8 @@ export const PriceBreakdownBox: React.FC<PriceBreakdownBoxProps> = ({ vehicle })
 
   return (
     <div id="pricing-breakdown-card" className="bg-white rounded-2xl border border-[#DFE6EC] shadow-lg p-5 sm:p-6 space-y-5">
+      {quoteError && <p role="alert" className="text-sm text-red-700">{quoteError}</p>}
+      {quoteLoading && <p className="text-sm text-slate-500">Updating price...</p>}
       {/* Rate Banner */}
       <div className="flex items-baseline justify-between border-b border-[#EAF0F3] pb-4">
         <div>
@@ -250,8 +249,7 @@ export const PriceBreakdownBox: React.FC<PriceBreakdownBoxProps> = ({ vehicle })
               compact={true}
               title="Vehicle Schedule & Bookings"
               onSelectRange={(pickup, ret) => {
-                if (pickup) setPickupDate(pickup);
-                if (ret) setReturnDate(ret);
+                if (pickup && ret) setSearchParameters({ pickupDate: pickup, returnDate: ret });
               }}
             />
           </div>
@@ -331,7 +329,7 @@ export const PriceBreakdownBox: React.FC<PriceBreakdownBoxProps> = ({ vehicle })
               Estimated Total
             </span>
             <span className="text-[10px] text-[#66747E]">
-              Includes statutory 15% VAT (Rs {pricing.vatIncluded.toLocaleString()})
+              Includes VAT (Rs {pricing.vatIncluded.toLocaleString()})
             </span>
           </div>
           <span className="font-display font-extrabold text-xl sm:text-2xl text-[#16324F] tabular-nums">
@@ -346,7 +344,7 @@ export const PriceBreakdownBox: React.FC<PriceBreakdownBoxProps> = ({ vehicle })
           type="button"
           id="btn-request-vehicle"
           onClick={handleProceedBooking}
-          disabled={!dateValidation.isValid || (availability ? !availability.isAvailable : false)}
+          disabled={!quote || quoteLoading || checking || !dateValidation.isValid || !availability?.isAvailable}
           className="w-full flex items-center justify-center gap-2 bg-[#D97745] hover:bg-[#c26534] disabled:bg-[#CAD5DF] disabled:cursor-not-allowed text-white py-3.5 px-4 rounded-xl font-bold text-sm shadow-md transition-all active:scale-[0.98] cursor-pointer"
         >
           <span>Request This Vehicle</span>

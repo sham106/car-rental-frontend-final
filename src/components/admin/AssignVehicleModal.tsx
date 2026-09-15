@@ -140,6 +140,11 @@ export const AssignVehicleModal: React.FC<AssignVehicleModalProps> = ({
                   </option>
                 ))}
               </select>
+              {vehiclesList.length === 0 && (
+                <p className="mt-1.5 text-[11px] text-[#B9534F]">
+                  No assignable vehicles found. Ensure at least one vehicle is in available status.
+                </p>
+              )}
             </div>
           )}
 

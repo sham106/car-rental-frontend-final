@@ -19,9 +19,11 @@ import { vehicleService } from '../services/vehicleService';
 import { categoryService } from '../services/categoryService';
 import { Vehicle, VehicleCategory, TransmissionType, FuelType } from '../types/vehicle';
 import { useSearch } from '../context/SearchContext';
-import { RENTAL_LOCATIONS } from '../constants/locations';
+import { useLocations } from '../hooks/useLocations';
+import { isValidDateString } from '../utils/dateUtils';
 
 export const FleetPage: React.FC = () => {
+  const RENTAL_LOCATIONS = useLocations();
   const [searchParams, setSearchParams] = useSearchParams();
   const {
     pickupLocationId,
@@ -32,6 +34,7 @@ export const FleetPage: React.FC = () => {
     isSameDay,
     setPickupDate,
     setReturnDate,
+    setSearchParameters,
   } = useSearch();
 
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -56,10 +59,18 @@ export const FleetPage: React.FC = () => {
 
   // Sync category param if URL changes
   useEffect(() => {
-    const catFromUrl = searchParams.get('category');
-    if (catFromUrl) {
-      setSelectedCategory(catFromUrl);
-    }
+    setSelectedCategory(searchParams.get('category') || 'all');
+    setSearchQuery(searchParams.get('q') || '');
+    const pickup = searchParams.get('pickupDate');
+    const dropoff = searchParams.get('returnDate');
+    const pickupLoc = searchParams.get('pickupLoc');
+    const returnLoc = searchParams.get('returnLoc');
+    setSearchParameters({
+      pickupDate: pickup && isValidDateString(pickup) ? pickup : undefined,
+      returnDate: dropoff && isValidDateString(dropoff) ? dropoff : undefined,
+      pickupLocationId: RENTAL_LOCATIONS.some(l => l.id === pickupLoc) ? pickupLoc! : undefined,
+      returnLocationId: RENTAL_LOCATIONS.some(l => l.id === returnLoc) ? returnLoc! : undefined,
+    });
   }, [searchParams]);
 
   // Listen for admin fleet updates
@@ -101,6 +112,7 @@ export const FleetPage: React.FC = () => {
   // Check availability for current vehicles against search dates
   useEffect(() => {
     let isMounted = true;
+    setAvailabilityMap({});
     if (pickupDate && returnDate && vehicles.length > 0) {
       Promise.all(
         vehicles.map((v) =>
@@ -133,7 +145,7 @@ export const FleetPage: React.FC = () => {
   // Filter list if user checks "Only show available on my dates"
   const displayedVehicles = useMemo(() => {
     if (!onlyAvailableOnDates) return vehicles;
-    return vehicles.filter((v) => availabilityMap[v.id] !== false);
+    return vehicles.filter((v) => availabilityMap[v.id] === true);
   }, [vehicles, onlyAvailableOnDates, availabilityMap]);
 
   const handleResetFilters = () => {

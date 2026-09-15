@@ -42,7 +42,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ onNavigate
 
     const matchedCustomers = customers.filter(
       (c) =>
-        c.name.toLowerCase().includes(q) ||
+        (c.name || c.fullName || `${c.firstName} ${c.lastName}`).toLowerCase().includes(q) ||
         c.phone.toLowerCase().includes(q) ||
         c.email.toLowerCase().includes(q)
     ).slice(0, 4);
@@ -50,7 +50,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ onNavigate
     const matchedOwners = owners.filter(
       (o) =>
         o.name.toLowerCase().includes(q) ||
-        o.contactPerson.toLowerCase().includes(q)
+        (o.contactPerson || '').toLowerCase().includes(q)
     ).slice(0, 4);
 
     const matchedAssignments = assignments.filter(
@@ -210,7 +210,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ onNavigate
                       >
                         <div>
                           <span className="font-medium text-xs text-[#24313A] group-hover:text-[#35658A]">
-                            {c.name}
+                            {c.name || c.fullName || `${c.firstName} ${c.lastName}`}
                           </span>
                           <span className="text-[11px] text-[#65727B] ml-2">{c.phone} · {c.email}</span>
                         </div>

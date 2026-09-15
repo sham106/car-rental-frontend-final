@@ -20,15 +20,17 @@ import {
 } from 'lucide-react';
 import { vehicleService } from '../services/vehicleService';
 import { bookingService } from '../services/bookingService';
+import { useQuote } from '../hooks/useQuote';
 import { Vehicle } from '../types/vehicle';
 import { CustomerDetails, RentalLocation } from '../types/booking';
 import { useSearch } from '../context/SearchContext';
-import { RENTAL_LOCATIONS } from '../constants/locations';
+import { useLocations } from '../hooks/useLocations';
 import { BRAND } from '../constants/theme';
 import { addDays } from '../utils/dateUtils';
 import { VehicleAvailabilityCalendar } from '../components/vehicle/VehicleAvailabilityCalendar';
 
 export const BookingRequestPage: React.FC = () => {
+  const RENTAL_LOCATIONS = useLocations();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const {
@@ -41,6 +43,7 @@ export const BookingRequestPage: React.FC = () => {
     setPickupDate,
     setReturnDate,
     setSameDayReturn,
+    setSearchParameters,
     isSameDay,
     dateValidation,
     todayStr,
@@ -105,7 +108,7 @@ export const BookingRequestPage: React.FC = () => {
           setVehicle(v);
           setLoadingVehicle(false);
         }
-      });
+      }).catch(e => { if (isMounted) {setLoadingVehicle(false);setSubmitError(e.message);} });
     } else {
       // If no vehicle selected, pick the first featured vehicle
       vehicleService.getFeaturedVehicles().then((feats) => {
@@ -113,23 +116,14 @@ export const BookingRequestPage: React.FC = () => {
           setVehicle(feats[0] || null);
           setLoadingVehicle(false);
         }
-      });
+      }).catch(e => { if (isMounted) {setLoadingVehicle(false);setSubmitError(e.message);} });
     }
     return () => {
       isMounted = false;
     };
   }, [vehicleIdParam, fleetVersion]);
 
-  const pricing = vehicle
-    ? bookingService.calculatePricing(
-        vehicle.dailyRate,
-        pickupDate,
-        returnDate,
-        pickupLocationId,
-        returnLocationId
-      )
-    : null;
-
+  const {pricing, error: quoteError} = useQuote(vehicle?.id,pickupDate,returnDate,pickupLocationId,returnLocationId);
   const pickupLocation = RENTAL_LOCATIONS.find((l) => l.id === pickupLocationId) || RENTAL_LOCATIONS[0];
   const returnLocation = RENTAL_LOCATIONS.find((l) => l.id === returnLocationId) || RENTAL_LOCATIONS[0];
 
@@ -150,7 +144,7 @@ export const BookingRequestPage: React.FC = () => {
   };
 
   const handleNextToStep2 = async () => {
-    if (!vehicle) return;
+    if (!vehicle || !pricing) { setSubmitError(quoteError || 'Wait for the current price before continuing.'); return; }
     setSubmitError(null);
 
     // Date validity check (cannot be in the past, return cannot be before pickup)
@@ -160,12 +154,14 @@ export const BookingRequestPage: React.FC = () => {
     }
 
     // Check availability before advancing
+    try {
     const check = await vehicleService.checkVehicleAvailability(vehicle.id, pickupDate, returnDate);
     if (!check.isAvailable) {
       setSubmitError('This vehicle is not available on the selected dates. Please adjust your dates or choose another car.');
       return;
     }
     setStep(2);
+    } catch(e) {setSubmitError(e instanceof Error ? e.message : "Unable to check availability.");}
   };
 
   const handleNextToStep3 = () => {
@@ -175,7 +171,7 @@ export const BookingRequestPage: React.FC = () => {
   };
 
   const handleFinalSubmit = async () => {
-    if (!vehicle) return;
+    if (!vehicle || !pricing) { setSubmitError(quoteError || 'Wait for the current price before continuing.'); return; }
     setSubmitting(true);
     setSubmitError(null);
 
@@ -361,8 +357,7 @@ export const BookingRequestPage: React.FC = () => {
                   pickupDate={pickupDate}
                   returnDate={returnDate}
                   onSelectRange={(p, r) => {
-                    if (p) setPickupDate(p);
-                    if (r) setReturnDate(r);
+                    if (p && r) setSearchParameters({ pickupDate: p, returnDate: r });
                   }}
                 />
               </div>
@@ -710,11 +705,11 @@ export const BookingRequestPage: React.FC = () => {
                   </div>
                   <div className="flex justify-between items-baseline">
                     <span className="text-[#66747E]">Pickup Location:</span>
-                    <span className="font-medium text-[#24313A]">{pickupLocation.name}</span>
+                    <span className="font-medium text-[#24313A]">{pickupLocation?.name}</span>
                   </div>
                   <div className="flex justify-between items-baseline">
                     <span className="text-[#66747E]">Return Location:</span>
-                    <span className="font-medium text-[#24313A]">{returnLocation.name}</span>
+                    <span className="font-medium text-[#24313A]">{returnLocation?.name}</span>
                   </div>
                 </div>
 

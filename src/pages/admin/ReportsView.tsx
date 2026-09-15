@@ -11,13 +11,13 @@ export const ReportsView: React.FC = () => {
   >('utilization');
 
   // Computed data
-  const totalFleet = vehicles.length || 1;
+  const totalFleet = vehicles.length;
   const activeRentals = vehicles.filter((v) => v.operationalStatus === 'rented').length;
-  const utilizationRate = Math.round((activeRentals / totalFleet) * 100);
+  const utilizationRate = totalFleet ? Math.round((activeRentals / totalFleet) * 100) : 0;
 
   const totalRevenue = bookings
-    .filter((b) => b.bookingStatus === 'active' || b.bookingStatus === 'completed')
-    .reduce((sum, b) => sum + (b.finalAmount || b.estimatedAmount), 0);
+    .filter((b) => b.bookingStatus === 'completed')
+    .reduce((sum, b) => sum + (b.finalAmount ?? b.estimatedAmount), 0);
 
   const totalMaintenance = maintenance.reduce((sum, m) => sum + m.totalCost, 0);
 
@@ -28,6 +28,8 @@ export const ReportsView: React.FC = () => {
       await adminReportService.exportRevenueCSV();
     } else if (activeReport === 'maintenance') {
       await adminReportService.exportMaintenanceCSV();
+    } else if (activeReport === 'owners') {
+      await adminReportService.exportOwnersCSV();
     } else if (activeReport === 'compliance') {
       await adminReportService.exportComplianceCSV();
     }
@@ -42,7 +44,7 @@ export const ReportsView: React.FC = () => {
             Fleet Intelligence & Financial Reports
           </h1>
           <p className="text-sm text-[#65727B] mt-0.5">
-            Operational utilization metrics, vehicle revenue yield, partner payouts, and expense audits
+            Operational utilization metrics, vehicle revenue yield, estimated owner shares, and expense audits
           </p>
         </div>
         <button
@@ -69,12 +71,12 @@ export const ReportsView: React.FC = () => {
 
         <div className="p-4 rounded-xl border bg-white shadow-2xs" style={{ borderColor: ADMIN_THEME.border }}>
           <div className="text-[11px] font-semibold text-[#65727B] uppercase tracking-wider">
-            Gross Booked Revenue
+            Completed Rental Revenue
           </div>
           <div className="mt-1 text-2xl font-bold text-[#24313A]">
             Rs {totalRevenue.toLocaleString()}
           </div>
-          <div className="mt-1 text-[11px] text-[#65727B]">From active and completed rentals</div>
+          <div className="mt-1 text-[11px] text-[#65727B]">From completed rentals</div>
         </div>
 
         <div className="p-4 rounded-xl border bg-white shadow-2xs" style={{ borderColor: ADMIN_THEME.border }}>
@@ -185,9 +187,9 @@ export const ReportsView: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-[#E5E9EC]">
               {vehicles.map((v) => {
-                const vehicleBookings = bookings.filter((b) => b.vehicleId === v.id && (b.bookingStatus === 'completed' || b.bookingStatus === 'active'));
+                const vehicleBookings = bookings.filter((b) => b.vehicleId === v.id && (b.bookingStatus === 'completed'));
                 const daysRented = vehicleBookings.reduce((sum, b) => sum + b.days, 0);
-                const vehicleRevenue = vehicleBookings.reduce((sum, b) => sum + (b.finalAmount || b.estimatedAmount), 0);
+                const vehicleRevenue = vehicleBookings.reduce((sum, b) => sum + (b.finalAmount ?? b.estimatedAmount), 0);
 
                 return (
                   <tr key={v.id} className="hover:bg-[#F9FBFC]">
@@ -247,9 +249,9 @@ export const ReportsView: React.FC = () => {
               {owners.map((o) => {
                 const ownerVehicles = vehicles.filter((v) => v.ownerId === o.id);
                 const ownerGross = bookings
-                  .filter((b) => ownerVehicles.some((ov) => ov.id === b.vehicleId) && (b.bookingStatus === 'active' || b.bookingStatus === 'completed'))
-                  .reduce((sum, b) => sum + (b.finalAmount || b.estimatedAmount), 0);
-                const splitRate = o.ownerType === 'Internal' ? 1.0 : (o.revenueSplitPercentage || 70) / 100;
+                  .filter((b) => ownerVehicles.some((ov) => ov.id === b.vehicleId) && (b.bookingStatus === 'completed'))
+                  .reduce((sum, b) => sum + (b.finalAmount ?? b.estimatedAmount), 0);
+                const splitRate = o.ownerType === 'Internal' ? 1.0 : (o.revenueSplitPercentage ?? 0) / 100;
                 const payout = Math.round(ownerGross * splitRate);
 
                 return (
@@ -257,7 +259,7 @@ export const ReportsView: React.FC = () => {
                     <td className="py-3 px-4 font-semibold text-[#24313A]">{o.name}</td>
                     <td className="py-3 px-3">{o.ownerType}</td>
                     <td className="py-3 px-3">{ownerVehicles.length} vehicles</td>
-                    <td className="py-3 px-3 font-semibold">{o.ownerType === 'Internal' ? '100% (Direct)' : `${o.revenueSplitPercentage || 70}% Host / 30% Mgmt`}</td>
+                    <td className="py-3 px-3 font-semibold">{o.ownerType === 'Internal' ? '100% (Direct)' : `${o.revenueSplitPercentage ?? 0}% Owner`}</td>
                     <td className="py-3 px-3">Rs {ownerGross.toLocaleString()}</td>
                     <td className="py-3 px-4 text-right font-bold text-[#17324D]">Rs {payout.toLocaleString()}</td>
                   </tr>

@@ -1,3 +1,4 @@
+import { RecordEditor } from '../../components/admin/RecordEditor';
 import React, { useState } from 'react';
 import {
   Users,
@@ -19,7 +20,8 @@ import { OwnerDetailsModal } from '../../components/admin/OwnerDetailsModal';
 import { VehicleProfileModal } from './VehicleProfileModal';
 
 export const OwnersView: React.FC = () => {
-  const { owners, vehicles } = useAdminData();
+  const { owners, vehicles, refreshAll } = useAdminData();
+  const [editor, setEditor] = useState<Owner | 'new' | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOwner, setSelectedOwner] = useState<Owner | null>(null);
   const [selectedVehicleForProfile, setSelectedVehicleForProfile] = useState<AdminVehicle | null>(null);
@@ -38,6 +40,8 @@ export const OwnersView: React.FC = () => {
 
   return (
     <div className="space-y-5">
+      {editor && <RecordEditor resource="owners" record={editor==='new'?undefined:editor} onClose={()=>setEditor(null)} onSaved={refreshAll} />}
+      <button onClick={()=>setEditor('new')} className="rounded-lg bg-[#17324D] text-white px-4 py-2 text-sm">Add owner</button>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -90,6 +94,7 @@ export const OwnersView: React.FC = () => {
                       <Building className="w-5 h-5" />
                     </div>
                     <div>
+                      <button type="button" className="text-xs underline mr-2" onClick={e=>{e.stopPropagation();setEditor(o);}}>Edit owner</button>
                       <h3 className="font-bold text-sm text-[#24313A] group-hover:text-[#17324D] transition-colors">
                         {o.name}
                       </h3>

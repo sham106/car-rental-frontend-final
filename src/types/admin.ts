@@ -57,6 +57,7 @@ export type DocumentType =
 export type UserRole = 'Super Admin' | 'Admin' | 'Operations Staff' | 'Viewer';
 
 export interface AdminVehicle {
+  version?: number;
   id: string;
   slug: string;
   registrationNumber: string; // e.g. "5972 DZ 14"
@@ -163,6 +164,7 @@ export interface Customer {
 }
 
 export interface AdminBooking {
+  paidAmount?: number;
   id: string;
   reference: string; // e.g. "OCR-2026-0012"
   customerId: string;

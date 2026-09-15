@@ -31,7 +31,7 @@ export const BookingConfirmationPage: React.FC = () => {
       bookingService.getBookingByReference(ref).then((b) => {
         setBooking(b || null);
         setLoading(false);
-      });
+      }).catch(() => { setBooking(null); setLoading(false); });
     } else {
       setLoading(false);
     }
@@ -69,7 +69,7 @@ export const BookingConfirmationPage: React.FC = () => {
       <div className="max-w-xl mx-auto px-4 py-20 text-center space-y-4">
         <h2 className="font-display font-bold text-2xl text-[#16324F]">Booking Request Not Found</h2>
         <p className="text-sm text-[#66747E]">
-          We could not locate reference code "{ref}". Please verify the code or contact support.
+          We could not locate reference code "{ref}". Open this receipt in the browser tab used to book, or contact our team with your reference.
         </p>
         <Link
           to="/"
@@ -97,9 +97,9 @@ export const BookingConfirmationPage: React.FC = () => {
           We've Received Your Booking Request
         </h1>
 
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#EAF0F3] border border-[#DFE6EC] text-xs font-semibold text-[#16324F]">
+        <div className="inline-flex flex-wrap justify-center items-center gap-2 px-4 py-2 rounded-xl bg-[#EAF0F3] border border-[#DFE6EC] text-xs font-semibold text-[#16324F]">
           <span>Booking Reference:</span>
-          <span className="font-mono text-[#D97745] font-bold text-sm tracking-wide">
+          <span className="font-mono break-all text-[#D97745] font-bold text-sm tracking-wide">
             {booking.reference}
           </span>
         </div>
@@ -135,6 +135,14 @@ export const BookingConfirmationPage: React.FC = () => {
           <p className="text-[#546E7A] leading-relaxed pl-7">
             This vehicle has been returned and verified in our fleet records. Thank you for choosing Oceane Car Rental!
           </p>
+        </div>
+      ) : booking.status === 'cancelled' || booking.status === 'rejected' ? (
+        <div role="status" className="bg-[#B9534F]/10 border border-[#B9534F]/30 rounded-2xl p-5 sm:p-6 space-y-2 text-sm">
+          <p className="font-bold text-[#B9534F]">
+            {booking.status === 'cancelled' ? 'Booking Cancelled' : 'Booking Request Declined'}
+          </p>
+          <p className="text-[#66747E]">This request is closed and no vehicle is reserved for it. Please contact our team or submit a new request.</p>
+          <Link to="/fleet" className="inline-block font-semibold text-[#16324F] hover:underline">Explore available vehicles</Link>
         </div>
       ) : (
         <div className="bg-[#F8F6F1] border border-[#CAD5DF] rounded-2xl p-5 sm:p-6 space-y-2 text-xs sm:text-sm text-[#24313A] shadow-xs">

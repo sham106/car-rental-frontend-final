@@ -57,6 +57,12 @@ export function calculateRentalDays(pickupDate: string, returnDate: string): num
   return diffDays > 0 ? diffDays : 1;
 }
 
+export function isValidDateString(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(value + 'T00:00:00Z');
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
 export interface DateValidationResult {
   isValid: boolean;
   isPickupInPast: boolean;
@@ -85,6 +91,8 @@ export function validateDateSelection(pickupDate: string, returnDate: string): D
   let errorMessage: string | null = null;
   if (!pickupDate) {
     errorMessage = 'Please select a pickup date.';
+  } else if (!isValidDateString(pickupDate) || (returnDate && !isValidDateString(returnDate))) {
+    errorMessage = 'Please select valid calendar dates.';
   } else if (isPickupInPast) {
     errorMessage = 'Pickup date cannot be in the past. Please select today or a future date.';
   } else if (!returnDate) {

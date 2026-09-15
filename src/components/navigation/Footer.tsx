@@ -2,9 +2,10 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Compass, Phone, Mail, MapPin, Clock, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { BRAND } from '../../constants/theme';
-import { RENTAL_LOCATIONS } from '../../constants/locations';
+import { useLocations } from '../../hooks/useLocations';
 
 export const Footer: React.FC = () => {
+  const RENTAL_LOCATIONS = useLocations();
   return (
     <footer id="site-footer" className="bg-[#16324F] text-[#EAF0F3] pt-16 pb-12 border-t border-[#20456d]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -110,17 +111,17 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/terms" className="hover:text-white transition-colors">
+                <Link to="/rental-terms" className="hover:text-white transition-colors">
                   Rental Policies & Excess
                 </Link>
               </li>
               <li>
-                <Link to="/terms#fuel-policy" className="hover:text-white transition-colors">
+                <Link to="/rental-terms#term-fuel-policy" className="hover:text-white transition-colors">
                   Same-to-Same Fuel Policy
                 </Link>
               </li>
               <li>
-                <Link to="/terms#mileage-limits" className="hover:text-white transition-colors">
+                <Link to="/rental-terms#term-mileage-limits" className="hover:text-white transition-colors">
                   Unlimited Island Mileage
                 </Link>
               </li>

@@ -1,3 +1,4 @@
+import { uploadFile } from '../../services/api';
 import React, { useState } from 'react';
 import { X, FileText, Upload, Check, AlertCircle } from 'lucide-react';
 import { AdminVehicle, DocumentType } from '../../types/admin';
@@ -39,10 +40,7 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
     new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   );
   const [notes, setNotes] = useState('Official electronic copy filed on record.');
-  const [simulatedFile, setSimulatedFile] = useState<{ name: string; size: string } | null>({
-    name: 'document_scan_2026.pdf',
-    size: '1.6 MB',
-  });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -62,6 +60,7 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
       setError('Please select a vehicle.');
       return;
     }
+    if (!selectedFile) { setError('Select a PDF or image to upload.'); return; }
     if (!title.trim()) {
       setError('Please provide a document title.');
       return;
@@ -70,6 +69,7 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
     try {
       setIsSubmitting(true);
       setError('');
+      const uploaded = await uploadFile(selectedFile, 'document');
       await adminDocumentService.createDocument({
         vehicleId: currentVehicle.id,
         vehicleReg: currentVehicle.registrationNumber,
@@ -78,8 +78,7 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
         title: title.trim(),
         issueDate,
         expiryDate,
-        fileUrl: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=800&q=80',
-        fileSize: simulatedFile?.size || '1.2 MB',
+        fileId: uploaded.id,
         notes: notes.trim(),
       });
       await onSuccess();
@@ -201,23 +200,24 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
             </div>
           </div>
 
-          {/* Simulated Upload Area */}
+          {/* File Upload */}
           <div>
             <label className="block text-xs font-semibold text-[#24313A] uppercase tracking-wider mb-1">
               File Attachment
             </label>
             <div className="p-4 border-2 border-dashed border-[#DCE2E6] rounded-xl flex flex-col items-center justify-center text-center bg-[#F8F9FA]">
               <Upload className="w-8 h-8 text-[#65727B] mb-2" />
+              <input aria-label="Document file" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onChange={e => setSelectedFile(e.target.files?.[0] || null)} />
               <div className="text-xs font-medium text-[#24313A]">
-                {simulatedFile ? (
+                {selectedFile ? (
                   <span className="text-[#4F7D61] font-semibold flex items-center gap-1">
-                    <Check className="w-4 h-4 inline" /> {simulatedFile.name} ({simulatedFile.size})
+                    <Check className="w-4 h-4 inline" /> {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
                   </span>
                 ) : (
                   'Drag and drop PDF / image or click to select'
                 )}
               </div>
-              <p className="text-[11px] text-[#65727B] mt-1">Supports PDF, JPG, PNG up to 15 MB</p>
+              <p className="text-[11px] text-[#65727B] mt-1">Supports PDF, JPG, PNG up to 10 MB</p>
             </div>
           </div>
 

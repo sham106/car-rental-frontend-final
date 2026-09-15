@@ -1,0 +1,65 @@
+import { chromium } from '../.review-tools/node_modules/playwright/index.mjs';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const browser=await chromium.launch({channel:'msedge',headless:true});
+const context=await browser.newContext({viewport:{width:1440,height:1000}});
+const page=await context.newPage();
+const base='http://localhost:3002';const errors=[];const checks=[];
+page.on('pageerror',e=>errors.push(e.message));
+const pass=s=>{checks.push(s);console.log('PASS '+s);};
+const go=path=>page.goto(base+path,{waitUntil:'domcontentloaded'});
+const headers={'Origin':base,'X-Requested-With':'XMLHttpRequest'};
+async function post(path,data){const response=await context.request.post(base+'/api'+path,{data,headers});assert.equal(response.status(),200,await response.text());return response.json();}
+try {
+ await go('/admin/owners');await page.getByLabel('Work email').fill('admin@example.com');await page.getByLabel('Password',{exact:true}).fill('a-good-test-password');await page.getByRole('button',{name:'Sign in',exact:true}).click();
+ await page.getByRole('button',{name:'Add owner',exact:true}).click();
+ await page.getByRole('dialog').getByLabel('Owner name',{exact:true}).fill('Browser Test Owner');
+ await page.getByRole('dialog').getByLabel('Email',{exact:true}).fill('owner@example.com');
+ await page.getByRole('dialog').getByRole('button',{name:'Save',exact:true}).click();
+ await page.getByRole('heading',{name:'Browser Test Owner',exact:true}).waitFor();pass('owner creation persists and renders in the directory');
+ await go('/admin/fleet');
+ // The global top navigation provides the add-vehicle action.
+ await page.getByRole('button',{name:/Add.*Vehicle|Add.*Car|New Vehicle/i}).first().click();
+ await page.getByPlaceholder('e.g. Toyota',{exact:true}).fill('Toyota');
+ await page.getByPlaceholder('e.g. Corolla Cross',{exact:true}).fill('Corolla Cross Hybrid');
+ await page.getByPlaceholder('e.g. 2841 JL 23',{exact:true}).fill('BROWSER 1');
+ await page.getByPlaceholder('17-character VIN',{exact:true}).fill('TESTVIN12345678901');
+ await page.getByRole('button',{name:'Register Fleet Vehicle',exact:true}).click();
+ await page.getByRole('button',{name:'Register Fleet Vehicle',exact:true}).waitFor({state:'hidden'});
+ let response=await context.request.get(base+'/api/admin/records/vehicles');let data=await response.json();
+ const vehicle=data.items[0];assert.ok(vehicle?.id);assert.equal(vehicle.ownerName,'Browser Test Owner');pass('vehicle registration resolves the real owner and saves through FastAPI');
+ await page.reload();await page.getByText(vehicle.registrationNumber,{exact:true}).first().waitFor();pass('fleet survives a page reload without browser data storage');
+ await go('/vehicle/'+vehicle.slug);
+ await page.getByRole('heading',{name:new RegExp(vehicle.model)}).first().waitFor();pass('public listing reads the newly registered fleet vehicle');
+ const start=new Date().toLocaleDateString('en-CA',{timeZone:'Indian/Mauritius'});
+ const end=new Date(new Date(start+'T00:00:00Z').getTime()+3*86400000).toISOString().slice(0,10);
+ const customer={firstName:'Browser',lastName:'Guest',phone:'+23055555555',email:'guest@example.com',country:'Mauritius'};
+ const booking=await post('/public/bookings',{vehicleId:vehicle.id,pickupDate:start,returnDate:end,pickupLocationId:'airport-mru',returnLocationId:'airport-mru',customer,idempotencyKey:crypto.randomUUID()});
+ assert.equal(booking.pricing.estimatedTotal,vehicle.dailyRate*3);pass('guest request uses server prices and appears in admin data');
+ await go('/admin/bookings');await page.getByText(booking.reference,{exact:true}).first().waitFor();
+ const row=page.locator('tr').filter({hasText:booking.reference});
+ await row.getByRole('button',{name:/confirm/i}).click();
+ await page.waitForFunction(async ({id})=>{const r=await fetch('/api/admin/records/bookings');const d=await r.json();return d.items?.find(x=>x.id===id)?.bookingStatus==='confirmed';},{id:booking.id});pass('admin confirmation works through the existing booking action');
+ const ranges=await (await context.request.get(base+`/api/public/vehicles/${vehicle.id}/ranges`)).json();assert.equal(ranges.length,1);assert.ok(!JSON.stringify(ranges).includes(booking.reference));pass('public calendar exposes occupied dates without customer references');
+ await go('/admin/settings');
+ await page.getByRole('button',{name:'Save All System Parameters'}).waitFor();
+ const deposit=page.locator('label').filter({hasText:/Default.*Deposit/}).locator('..').locator('input');
+ if(await deposit.count()) await deposit.fill('9000');
+ await page.getByRole('button',{name:'Save All System Parameters'}).click();
+ await page.getByText('Fleet operations settings updated and persisted successfully.').waitFor();pass('settings save confirms only after a server response');
+ const uploaded=await post('/admin/files',{kind:'document',name:'test.pdf',contentType:'application/pdf',content:Buffer.from('%PDF-1.4\n% local test file\n%%EOF').toString('base64')});
+ await post('/admin/records/documents',{vehicleId:vehicle.id,documentType:'Insurance Certificate',title:'Browser Test Policy',fileId:uploaded.id});
+ await go('/admin/documents');await page.getByText('Browser Test Policy',{exact:true}).waitFor();
+ assert.equal((await context.request.get(base+'/api/admin/files/'+uploaded.id)).status(),200);pass('document metadata and private download are connected');
+ const anonymous=await browser.newContext();assert.equal((await anonymous.request.get(base+'/api/admin/files/'+uploaded.id)).status(),401);await anonymous.close();pass('private files reject anonymous requests');
+ await go('/admin/excel-import');
+ const csv='Registration No,Brand,Model,Year,Category,Daily Rate,Mileage,Owner\nBROWSER 2,Toyota,Yaris,2025,compact,1500,500,Browser Test Owner\n';
+ await page.getByLabel('Fleet spreadsheet').setInputFiles({name:'fleet.csv',mimeType:'text/csv',buffer:Buffer.from(csv)});
+ await page.getByText('BROWSER 2',{exact:true}).waitFor();pass('spreadsheet preview reads the actual uploaded CSV');
+ await go('/admin/reports');assert.equal((await context.request.get(base+'/api/admin/reports/revenue.csv')).status(),200);pass('reports download server-generated CSV');
+ await go('/admin/fleet');await page.screenshot({path:'.review-tools/fleet-backend-desktop.png'});
+ await page.setViewportSize({width:390,height:844});await go('/admin/owners');await page.getByRole('button',{name:'Add owner',exact:true}).waitFor();await page.screenshot({path:'.review-tools/fleet-backend-mobile.png'});
+ assert.equal(errors.length,0,errors.join('\n'));pass('desktop and mobile admin pages render without JavaScript errors');
+ fs.writeFileSync('.review-tools/fleet-results.json',JSON.stringify({checks,errors},null,2));
+}catch(e){await page.screenshot({path:'.review-tools/fleet-failure.png'});console.error('PAGE ERRORS',errors);throw e;}
+finally{await browser.close();}

@@ -1,0 +1,76 @@
+import { chromium, request } from '../.review-tools/node_modules/playwright/index.mjs';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const backend = await request.newContext({baseURL:'http://127.0.0.1:8001'});
+const state = data => backend.post('/__test__/state',{data});
+const browser = await chromium.launch({channel:'msedge',headless:true});
+const context = await browser.newContext({viewport:{width:1440,height:1000}});
+const page = await context.newPage();
+const errors=[],checks=[];
+page.on('pageerror',e=>errors.push(e.message));
+const pass=s=>{checks.push(s);console.log('PASS '+s);};
+const base='http://localhost:3000';
+const go=p=>page.goto(base+p,{waitUntil:'domcontentloaded'});
+async function login(password='a-good-test-password'){
+ await page.getByLabel('Work email').fill('admin@example.com');
+ await page.getByLabel('Password',{exact:true}).fill(password);
+ await page.getByRole('button',{name:'Sign in',exact:true}).click();
+}
+const alert=s=>page.getByRole('alert').filter({hasText:s}).waitFor();
+try{
+ await state({active:true,member:true,confirmed:true,down:false,bad_login:false,expired:false,bad_refresh:false});
+ await go('/admin/fleet');await page.waitForURL('**/admin/login?next=*');
+ await page.getByRole('heading',{name:'Welcome back'}).waitFor();
+ await page.screenshot({path:'.review-tools/admin-login-desktop.png'});
+ assert.equal(await page.getByRole('heading',{name:'Fleet Vehicles Directory'}).count(),0);
+ pass('anonymous deep links redirect before admin content renders');
+ await login('incorrect');await alert('Invalid credentials');pass('invalid credentials show an error');
+ await login();await page.waitForURL('**/admin/fleet');
+ await page.getByRole('heading',{name:'Fleet Vehicles Directory'}).waitFor();
+ const cookies=(await context.cookies(base+'/api/admin/auth/me')).filter(c=>c.name.startsWith('ocr_admin_'));
+ assert.equal(cookies.length,2);assert.ok(cookies.every(c=>c.httpOnly));
+ assert.equal(await page.evaluate(()=>document.cookie.includes('ocr_admin_')),false);
+ assert.equal(await page.evaluate(()=>Object.keys(localStorage).some(k=>/access_token|refresh_token/.test(k))),false);
+ pass('authorized login returns to requested page with HTTP-only cookies');
+ await page.reload({waitUntil:'domcontentloaded'});await page.getByRole('heading',{name:'Fleet Vehicles Directory'}).waitFor();
+ pass('session restores after reload');
+ await page.getByRole('button',{name:'Administrator account',exact:true}).click();
+ await page.getByText('Real Admin',{exact:true}).last().waitFor();
+ assert.equal(await page.getByText('Simulate Role Switch').count(),0);pass('account menu uses real identity');
+ await state({expired:true});await page.reload({waitUntil:'domcontentloaded'});
+ await page.getByRole('heading',{name:'Fleet Vehicles Directory'}).waitFor();
+ assert.equal((await context.cookies(base+'/api/admin/auth/me')).find(c=>c.name==='ocr_admin_access')?.value,'access-fresh');
+ pass('expired access refreshes through FastAPI');
+ const other=await context.newPage();await other.goto(base+'/admin',{waitUntil:'domcontentloaded'});
+ await other.getByRole('heading',{name:'Fleet Operations Overview'}).waitFor();
+ await page.getByRole('button',{name:'Administrator account',exact:true}).click();
+ await page.getByRole('button',{name:'Sign out',exact:true}).click();
+ await page.waitForURL('**/admin/login?next=*');await other.waitForURL('**/admin/login?next=*');await other.close();
+ pass('logout clears session and updates another tab');
+ await state({expired:false,member:false});await login();await alert('does not have active administrator access');
+ pass('non-admin Supabase users are denied');
+ await state({member:true});await login();await page.waitForURL('**/admin/fleet');
+ await state({active:false});await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+ await page.waitForURL('**/admin/login?next=*');pass('revoked membership removes access on revalidation');
+ await state({active:true});await go('/admin/forgot-password');
+ await page.getByLabel('Work email').fill('unknown@example.com');await page.getByRole('button',{name:'Send reset link'}).click();
+ await page.getByRole('status').filter({hasText:'If the account exists'}).waitFor();pass('recovery uses an enumeration-safe result');
+ await go('/admin/reset-password#access_token=recovery-valid&type=recovery');
+ await page.getByLabel('New password',{exact:true}).fill('new-example-password');
+ await page.getByLabel('Confirm password',{exact:true}).fill('mismatched-example');
+ await page.getByRole('button',{name:'Update password'}).click();await alert('do not match');
+ assert.equal(new URL(page.url()).hash,'');
+ await page.getByLabel('Confirm password',{exact:true}).fill('new-example-password');
+ await page.getByRole('button',{name:'Update password'}).click();
+ await page.getByRole('status').filter({hasText:'Password updated'}).waitFor();pass('reset validates matching passwords and strips URL token');
+ await go('/admin/reset-password');await alert('missing or no longer available');pass('missing reset token gives recovery action');
+ await page.setViewportSize({width:390,height:844});await go('/admin/login');
+ await page.getByRole('heading',{name:'Welcome back'}).waitFor();await page.screenshot({path:'.review-tools/admin-login-mobile.png'});
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);pass('mobile login fits 390px viewport');
+ await state({down:true});await login();await alert('temporarily unavailable');pass('provider outage does not grant access');
+ assert.deepEqual(errors,[]);
+}catch(error){console.error(error);await page.screenshot({path:'.review-tools/admin-auth-failure.png'});process.exitCode=1;}
+finally{
+ fs.writeFileSync('.review-tools/admin-auth-results.json',JSON.stringify({checks,errors,passed:!process.exitCode},null,2));
+ await state({down:false});await backend.dispose();await browser.close();
+}

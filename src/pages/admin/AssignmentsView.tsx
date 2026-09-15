@@ -167,6 +167,16 @@ export const AssignmentsView: React.FC = () => {
   const returnedCount = assignments.filter(
     (a) => a.status.toLowerCase() === 'completed' || a.status.toLowerCase() === 'returned'
   ).length;
+  const activelyAssignedVehicleIds = new Set(
+    assignments
+      .filter((a) => a.status.toLowerCase() === 'active')
+      .map((a) => a.vehicleId)
+  );
+  const assignableVehicles = vehicles.filter(
+    (v) =>
+      (v.operationalStatus || '').toLowerCase() === 'available' &&
+      !activelyAssignedVehicleIds.has(v.id)
+  );
 
   return (
     <div className="space-y-5">
@@ -603,7 +613,7 @@ export const AssignmentsView: React.FC = () => {
       {/* New Assignment Modal */}
       <AssignVehicleModal
         vehicle={null}
-        vehiclesList={vehicles.filter((v) => v.operationalStatus === 'available')}
+        vehiclesList={assignableVehicles}
         isOpen={isAssignModalOpen}
         onClose={() => setIsAssignModalOpen(false)}
         onSuccess={refreshAll}

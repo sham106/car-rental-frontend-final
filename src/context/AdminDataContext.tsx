@@ -1,3 +1,4 @@
+import { api } from '../services/api';
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import {
   AdminVehicle,
@@ -8,7 +9,6 @@ import {
   MaintenanceRecord,
   ComplianceRecord,
   VehicleDocument,
-  AdminUser,
   AuditLog,
   AdminNotification,
   AdminOperationalStatus,
@@ -23,7 +23,6 @@ import { adminComplianceService } from '../services/admin/adminComplianceService
 import { adminDocumentService } from '../services/admin/adminDocumentService';
 import { adminAuditService } from '../services/admin/adminAuditService';
 import { adminNotificationService } from '../services/admin/adminNotificationService';
-import { INITIAL_ADMIN_USERS } from '../mocks/adminFleet';
 
 interface AdminDataContextType {
   vehicles: AdminVehicle[];
@@ -34,12 +33,10 @@ interface AdminDataContextType {
   maintenance: MaintenanceRecord[];
   compliance: ComplianceRecord[];
   documents: VehicleDocument[];
-  users: AdminUser[];
   auditLogs: AuditLog[];
   notifications: AdminNotification[];
-  currentUser: AdminUser;
-  setCurrentUser: (u: AdminUser) => void;
   isLoading: boolean;
+  actionError: string | null;
   refreshAll: () => Promise<void>;
 
   // Common quick actions
@@ -73,11 +70,10 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [maintenance, setMaintenance] = useState<MaintenanceRecord[]>([]);
   const [compliance, setCompliance] = useState<ComplianceRecord[]>([]);
   const [documents, setDocuments] = useState<VehicleDocument[]>([]);
-  const [users] = useState<AdminUser[]>(INITIAL_ADMIN_USERS);
-  const [currentUser, setCurrentUser] = useState<AdminUser>(INITIAL_ADMIN_USERS[0]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // Global search & notification drawer controls
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -85,29 +81,9 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const refreshAll = useCallback(async () => {
     try {
-      const [
-        vList,
-        bList,
-        aList,
-        oList,
-        cList,
-        mList,
-        compList,
-        dList,
-        logList,
-        notifList,
-      ] = await Promise.all([
-        adminVehicleService.getVehicles(),
-        adminBookingService.getBookings(),
-        adminAssignmentService.getAssignments(),
-        adminOwnerService.getOwners(),
-        adminCustomerService.getCustomers(),
-        adminMaintenanceService.getRecords(),
-        adminComplianceService.getRecords(),
-        adminDocumentService.getDocuments(),
-        adminAuditService.getLogs(),
-        adminNotificationService.getNotifications(),
-      ]);
+      const data = await api<{vehicles:AdminVehicle[];bookings:AdminBooking[];assignments:Assignment[];owners:Owner[];customers:Customer[];maintenance:MaintenanceRecord[];compliance:ComplianceRecord[];documents:VehicleDocument[];audit:AuditLog[];notifications:AdminNotification[]}>('/admin/data');
+      const {vehicles:vList,bookings:bList,assignments:aList,owners:oList,customers:cList,maintenance:mList,compliance:compList,documents:dList,audit:logList,notifications:notifList} = data;
+      setActionError(null);
 
       setVehicles(vList);
       setBookings(bList);
@@ -120,7 +96,7 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setAuditLogs(logList);
       setNotifications(notifList);
     } catch (err) {
-      console.error('Failed to load admin fleet data', err);
+      setActionError(err instanceof Error ? err.message : 'Unable to load fleet data.');
     } finally {
       setIsLoading(false);
     }
@@ -128,6 +104,8 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   useEffect(() => {
     refreshAll();
+    const timer = window.setInterval(() => { if (document.visibilityState === 'visible') refreshAll(); }, 30000);
+    window.addEventListener('focus', refreshAll);
 
     const handleFleetUpdate = () => refreshAll();
     window.addEventListener('oceane_fleet_updated', handleFleetUpdate);
@@ -142,6 +120,8 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     window.addEventListener('oceane_notifs_updated', handleFleetUpdate);
 
     return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('focus', refreshAll);
       window.removeEventListener('oceane_fleet_updated', handleFleetUpdate);
       window.removeEventListener('oceane_bookings_updated', handleFleetUpdate);
       window.removeEventListener('oceane_assignments_updated', handleFleetUpdate);
@@ -183,8 +163,13 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const confirmBooking = async (id: string) => {
-    await adminBookingService.confirmBooking(id);
-    await refreshAll();
+    setActionError(null);
+    try {
+      await adminBookingService.confirmBooking(id);
+      await refreshAll();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Unable to confirm this booking.');
+    }
   };
 
   const rejectBooking = async (id: string, reason: string) => {
@@ -233,12 +218,10 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         maintenance,
         compliance,
         documents,
-        users,
-        currentUser,
-        setCurrentUser,
         auditLogs,
         notifications,
         isLoading,
+        actionError,
         refreshAll,
         changeVehicleStatus,
         toggleVehiclePublish,

@@ -5,12 +5,14 @@ import { Footer } from '../components/navigation/Footer';
 import { WhatsAppFloat } from '../components/navigation/WhatsAppFloat';
 
 export const RootLayout: React.FC = () => {
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
 
   // Scroll to top on route change
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+    const target = hash ? document.getElementById(hash.slice(1)) : null;
+    if (target) target.scrollIntoView();
+    else window.scrollTo(0, 0);
+  }, [pathname, hash]);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F6F1] text-[#24313A]">

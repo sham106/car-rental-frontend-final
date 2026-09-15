@@ -1,21 +1,24 @@
+import { RecordEditor } from '../../components/admin/RecordEditor';
+import { Customer } from '../../types/admin';
 import React, { useState } from 'react';
 import { Users, Search, CheckCircle2, Star, Mail, Phone, ShieldCheck } from 'lucide-react';
 import { useAdminData } from '../../context/AdminDataContext';
 import { ADMIN_THEME } from '../../constants/adminTheme';
 
 export const CustomersView: React.FC = () => {
-  const { customers, bookings } = useAdminData();
+  const { customers, bookings, refreshAll } = useAdminData();
+  const [editor, setEditor] = useState<Customer | 'new' | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   const filtered = customers.filter((c) => {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       return (
-        c.fullName.toLowerCase().includes(q) ||
+        (c.fullName || `${c.firstName} ${c.lastName}`).toLowerCase().includes(q) ||
         c.email.toLowerCase().includes(q) ||
         c.phone.toLowerCase().includes(q) ||
-        c.nationality.toLowerCase().includes(q) ||
-        c.licenseNumber.toLowerCase().includes(q)
+        (c.nationality || c.country).toLowerCase().includes(q) ||
+        (c.licenseNumber || c.licenceNumber).toLowerCase().includes(q)
       );
     }
     return true;
@@ -23,6 +26,8 @@ export const CustomersView: React.FC = () => {
 
   return (
     <div className="space-y-5">
+      {editor && <RecordEditor resource="customers" record={editor==='new'?undefined:editor} onClose={()=>setEditor(null)} onSaved={refreshAll} />}
+      <button onClick={()=>setEditor('new')} className="rounded-lg bg-[#17324D] text-white px-4 py-2 text-sm">Add customer</button>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -70,18 +75,18 @@ export const CustomersView: React.FC = () => {
                 <th className="py-3 px-3">Driving License #</th>
                 <th className="py-3 px-3">Verification</th>
                 <th className="py-3 px-3">Rental History</th>
-                <th className="py-3 px-4 text-right">Lifetime Spend</th>
+                <th className="py-3 px-4 text-right">Fully Paid Rentals</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E5E9EC]">
               {filtered.map((c) => {
                 const clientBookings = bookings.filter((b) => b.customerId === c.id);
-                const spend = clientBookings.reduce((sum, b) => sum + (b.finalAmount || b.estimatedAmount), 0);
+                const spend = clientBookings.filter(b => b.paymentStatus === 'Fully Paid').reduce((sum, b) => sum + (b.finalAmount ?? b.estimatedAmount), 0);
 
                 return (
-                  <tr key={c.id} className="hover:bg-[#F9FBFC] transition-colors">
-                    <td className="py-3 px-4">
-                      <div className="font-semibold text-[#24313A]">{c.fullName}</div>
+                  <tr onDoubleClick={()=>setEditor(c)} key={c.id} className="hover:bg-[#F9FBFC] transition-colors">
+                    <td className="py-3 px-4"><button type="button" className="text-xs underline block mb-1" onClick={()=>setEditor(c)}>Edit customer</button>
+                      <div className="font-semibold text-[#24313A]">{c.fullName || `${c.firstName} ${c.lastName}`}</div>
                       <div className="flex items-center gap-1 text-[11px] text-[#C4802C] mt-0.5">
                         <Star className="w-3 h-3 fill-current" />
                         <span>{c.rating ? c.rating.toFixed(1) : '5.0'}</span>
@@ -94,27 +99,27 @@ export const CustomersView: React.FC = () => {
                     </td>
 
                     <td className="py-3 px-3 text-[#24313A] font-medium">
-                      {c.nationality}
+                      {c.nationality || c.country}
                     </td>
 
                     <td className="py-3 px-3 font-mono text-[#65727B]">
-                      {c.licenseNumber}
+                      {c.licenseNumber || c.licenceNumber}
                     </td>
 
                     <td className="py-3 px-3">
                       <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#4F7D61] bg-[#EEF5F1] px-2 py-0.5 rounded-full border border-[#CCE0D5]">
-                        <ShieldCheck className="w-3 h-3" /> ID Verified
+                        <ShieldCheck className="w-3 h-3" /> Verification required
                       </span>
                     </td>
 
                     <td className="py-3 px-3">
                       <div className="font-semibold text-[#24313A]">
-                        {clientBookings.length || c.totalBookings || 1} rentals
+                        {clientBookings.length} booking requests
                       </div>
                     </td>
 
                     <td className="py-3 px-4 text-right font-bold text-[#17324D]">
-                      Rs {(spend || c.totalSpend || 12000).toLocaleString()}
+                      Rs {spend.toLocaleString()}
                     </td>
                   </tr>
                 );

@@ -158,8 +158,13 @@ export const SearchProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }) => {
     if (params.pickupLocationId) setPickupLocationId(params.pickupLocationId);
     if (params.returnLocationId) setReturnLocationId(params.returnLocationId);
-    if (params.pickupDate) setPickupDate(params.pickupDate);
-    if (params.returnDate) setReturnDate(params.returnDate);
+    // Resolve both dates together: React setters still see the previous render's pickup.
+    const nextPickup = params.pickupDate
+      ? (params.pickupDate < todayStr ? todayStr : params.pickupDate)
+      : pickupDate;
+    const nextReturn = params.returnDate || returnDate;
+    setPickupDateInternal(nextPickup);
+    setReturnDateInternal(nextReturn < nextPickup ? nextPickup : nextReturn);
     if (params.selectedCategory) setSelectedCategory(params.selectedCategory);
   };
 

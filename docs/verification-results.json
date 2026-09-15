@@ -1,0 +1,199 @@
+{
+  "date": "2026-09-07",
+  "browser": "Headless Microsoft Edge",
+  "typecheck": "passed",
+  "productionBuild": "passed",
+  "regressionTests": {
+    "passed": 8,
+    "failed": 0
+  },
+  "routes": {
+    "results": [
+      {
+        "route": "/",
+        "heading": "Drive Mauritius Your Way.",
+        "textLength": 6718,
+        "overflow": false
+      },
+      {
+        "route": "/fleet",
+        "heading": "Our Rental Fleet",
+        "textLength": 3622,
+        "overflow": false
+      },
+      {
+        "route": "/about",
+        "heading": "Built on Trust, Island Hospitality, and Automotive Confidence.",
+        "textLength": 3185,
+        "overflow": false
+      },
+      {
+        "route": "/contact",
+        "heading": "Get in Touch With Our Team",
+        "textLength": 2600,
+        "overflow": false
+      },
+      {
+        "route": "/faq",
+        "heading": "Frequently Asked Questions",
+        "textLength": 2338,
+        "overflow": false
+      },
+      {
+        "route": "/rental-terms",
+        "heading": "Rental Terms & Conditions",
+        "textLength": 4586,
+        "overflow": false
+      },
+      {
+        "route": "/book",
+        "heading": "Request Vehicle Booking",
+        "textLength": 3365,
+        "overflow": false
+      },
+      {
+        "route": "/confirmation",
+        "heading": "Booking Request Not Found",
+        "textLength": 1250,
+        "overflow": false
+      },
+      {
+        "route": "/does-not-exist",
+        "heading": "Page Not Found",
+        "textLength": 1263,
+        "overflow": false
+      },
+      {
+        "route": "/admin",
+        "heading": "Fleet Operations Overview",
+        "textLength": 2337,
+        "overflow": false
+      },
+      {
+        "route": "/admin/fleet",
+        "heading": "Fleet Vehicles Directory",
+        "textLength": 2587,
+        "overflow": false
+      },
+      {
+        "route": "/admin/bookings",
+        "heading": "Bookings & Rental Operations",
+        "textLength": 1892,
+        "overflow": false
+      },
+      {
+        "route": "/admin/assignments",
+        "heading": "Vehicle Custody & Staff Assignments",
+        "textLength": 1853,
+        "overflow": false
+      },
+      {
+        "route": "/admin/owners",
+        "heading": "Fleet Ownership & Partner Hosts",
+        "textLength": 1769,
+        "overflow": false
+      },
+      {
+        "route": "/admin/customers",
+        "heading": "Customer Directory & Renter Profiles",
+        "textLength": 1229,
+        "overflow": false
+      },
+      {
+        "route": "/admin/maintenance",
+        "heading": "Fleet Maintenance & Service Records",
+        "textLength": 2362,
+        "overflow": false
+      },
+      {
+        "route": "/admin/compliance",
+        "heading": "Legal Compliance & Certifications",
+        "textLength": 1769,
+        "overflow": false
+      },
+      {
+        "route": "/admin/documents",
+        "heading": "Vehicle Digital Documents",
+        "textLength": 1384,
+        "overflow": false
+      },
+      {
+        "route": "/admin/website-listings",
+        "heading": "Customer Website Listings",
+        "textLength": 2198,
+        "overflow": false
+      },
+      {
+        "route": "/admin/reports",
+        "heading": "Fleet Intelligence & Financial Reports",
+        "textLength": 1904,
+        "overflow": false
+      },
+      {
+        "route": "/admin/excel-import",
+        "heading": "Excel & CSV Fleet Migration",
+        "textLength": 862,
+        "overflow": false
+      },
+      {
+        "route": "/admin/users-roles",
+        "heading": "Users & Role-Based Access Control (RBAC)",
+        "textLength": 1606,
+        "overflow": false
+      },
+      {
+        "route": "/admin/audit",
+        "heading": "Operational Audit Trail & Activity Logs",
+        "textLength": 1697,
+        "overflow": false
+      },
+      {
+        "route": "/admin/settings",
+        "heading": "System & Fleet Settings",
+        "textLength": 1323,
+        "overflow": false
+      },
+      {
+        "route": "/admin/does-not-exist",
+        "heading": "Page Not Found",
+        "textLength": 618,
+        "overflow": false
+      },
+      {
+        "route": "/",
+        "mobile": true,
+        "overflow": false
+      },
+      {
+        "route": "/fleet",
+        "mobile": true,
+        "overflow": false
+      },
+      {
+        "route": "/book",
+        "mobile": true,
+        "overflow": false
+      },
+      {
+        "route": "/contact",
+        "mobile": true,
+        "overflow": false
+      },
+      {
+        "route": "/admin",
+        "mobile": true,
+        "overflow": false
+      },
+      {
+        "route": "/admin/fleet",
+        "mobile": true,
+        "overflow": false
+      }
+    ],
+    "errors": []
+  },
+  "bookingFlow": {
+    "passed": true,
+    "errors": []
+  }
+}

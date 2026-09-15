@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Settings,
   Building,
@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { ADMIN_THEME } from '../../constants/adminTheme';
 import { useAdminData } from '../../context/AdminDataContext';
-import { adminAuditService } from '../../services/admin/adminAuditService';
+import { list, update } from '../../services/api';
 
 export const SystemSettingsView: React.FC = () => {
   const { refreshAll } = useAdminData();
@@ -36,32 +36,29 @@ export const SystemSettingsView: React.FC = () => {
   const [currencySymbol, setCurrencySymbol] = useState('Rs (MUR)');
 
   const [savedSuccess, setSavedSuccess] = useState(false);
-  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [version, setVersion] = useState<number | undefined>();
+  useEffect(() => {
+    list<Record<string, any>>('settings').then(rows => {
+      const s = rows[0]; if (!s) return;
+      setCompanyName(s.companyName); setBrn(s.brn || ''); setVatNumber(s.vatNumber || '');
+      setPhone(s.phone || ''); setEmail(s.email || ''); setHeadquarters(s.headquarters || '');
+      setDefaultDeposit(s.defaultDeposit); setAirportDeliveryFee(s.airportDeliveryFee);
+      setHotelDeliveryFee(s.hotelDeliveryFee); setServiceIntervalKm(s.serviceIntervalKm);
+      setComplianceNoticeDays(s.complianceNoticeDays); setCurrencySymbol(s.currencySymbol);
+      setVersion(s.version); setLoaded(true);
+    }).catch(e => setSaveError(e.message));
+  }, []);
 
-  const handleSaveSettings = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSavedSuccess(true);
-
-    adminAuditService.logAction({
-      actorName: 'Admin User',
-      actorRole: 'Operations Admin',
-      action: 'System Settings Updated',
-      targetType: 'Document',
-      targetId: 'config',
-      targetLabel: 'Fleet Configuration',
-      details: `Updated operational policies: Default Deposit Rs ${defaultDeposit}, Service Interval ${serviceIntervalKm} km, Compliance notice ${complianceNoticeDays} days.`,
-    });
-
-    setTimeout(() => {
-      setSavedSuccess(false);
-    }, 3000);
-  };
-
-  const handleResetData = () => {
-    localStorage.clear();
-    setResetConfirmOpen(false);
-    refreshAll();
-    window.location.reload();
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault(); setSaving(true); setSavedSuccess(false); setSaveError('');
+    try {
+      const result = await update<{version:number}>('settings', 'company', {companyName,brn,vatNumber,phone,email,headquarters,defaultDeposit,airportDeliveryFee,hotelDeliveryFee,serviceIntervalKm,complianceNoticeDays,currencySymbol,version});
+      setVersion(result.version); setSavedSuccess(true); await refreshAll();
+    } catch (e) { setSaveError(e instanceof Error ? e.message : 'Unable to save settings.'); }
+    finally { setSaving(false); }
   };
 
   return (
@@ -78,6 +75,7 @@ export const SystemSettingsView: React.FC = () => {
         </div>
       </div>
 
+      {saveError && <p role="alert" className="text-sm text-red-700">{saveError}</p>}
       {savedSuccess && (
         <div className="p-4 rounded-xl bg-[#EEF5F1] border border-[#CCE0D5] text-[#24313A] flex items-center gap-3">
           <CheckCircle2 className="w-5 h-5 text-[#4F7D61] flex-shrink-0" />
@@ -249,16 +247,8 @@ export const SystemSettingsView: React.FC = () => {
         {/* Action Controls */}
         <div className="flex items-center justify-between pt-2">
           <button
-            type="button"
-            onClick={() => setResetConfirmOpen(true)}
-            className="px-4 py-2.5 text-xs font-semibold text-[#B9534F] bg-white hover:bg-[#FDEDEC] border border-[#F8D7D5] rounded-xl transition-colors flex items-center gap-2 cursor-pointer shadow-2xs"
-          >
-            <RotateCcw className="w-4 h-4" />
-            <span>Reset Demo Fleet Data</span>
-          </button>
-
-          <button
             type="submit"
+            disabled={saving || !loaded}
             className="px-6 py-2.5 text-xs font-semibold text-white bg-[#17324D] hover:bg-[#1F4366] rounded-xl transition-colors flex items-center gap-2 cursor-pointer shadow-2xs"
           >
             <Save className="w-4 h-4" />
@@ -267,40 +257,6 @@ export const SystemSettingsView: React.FC = () => {
         </div>
       </form>
 
-      {/* Confirmation Modal */}
-      {resetConfirmOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-          <div className="w-full max-w-md bg-white rounded-xl shadow-2xl border border-[#DCE2E6] p-6 space-y-4">
-            <div className="flex items-start gap-3">
-              <div className="p-2.5 rounded-full bg-[#FDEDEC] text-[#B9534F] flex-shrink-0">
-                <AlertTriangle className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="text-base font-semibold text-[#24313A]">Reset Fleet Database?</h3>
-                <p className="text-xs text-[#65727B] mt-1">
-                  This will wipe all custom bookings, maintenance work orders, and vehicle status changes, re-seeding the application back to the factory seed state.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setResetConfirmOpen(false)}
-                className="px-3.5 py-1.5 text-xs font-medium text-[#24313A] bg-[#F4F6F7] hover:bg-[#EAEFF2] rounded-lg cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleResetData}
-                className="px-3.5 py-1.5 text-xs font-semibold text-white bg-[#B9534F] hover:bg-[#A3433F] rounded-lg cursor-pointer"
-              >
-                Confirm Reset
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -26,7 +26,7 @@ import { BRAND } from '../constants/theme';
 export const VehicleDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { pickupDate, returnDate, rentalDays, setPickupDate, setReturnDate } = useSearch();
+  const { pickupDate, returnDate, rentalDays, setPickupDate, setReturnDate, setSearchParameters } = useSearch();
 
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [similarVehicles, setSimilarVehicles] = useState<Vehicle[]>([]);
@@ -194,8 +194,7 @@ export const VehicleDetailPage: React.FC = () => {
               pickupDate={pickupDate}
               returnDate={returnDate}
               onSelectRange={(pickup, ret) => {
-                if (pickup) setPickupDate(pickup);
-                if (ret) setReturnDate(ret);
+                if (pickup && ret) setSearchParameters({ pickupDate: pickup, returnDate: ret });
               }}
             />
           </section>

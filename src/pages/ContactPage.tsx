@@ -11,9 +11,10 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { BRAND } from '../constants/theme';
-import { RENTAL_LOCATIONS } from '../constants/locations';
+import { useLocations } from '../hooks/useLocations';
 
 export const ContactPage: React.FC = () => {
+  const RENTAL_LOCATIONS = useLocations();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -23,15 +24,12 @@ export const ContactPage: React.FC = () => {
   });
 
   const [submitted, setSubmitted] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
-      setSubmitted(true);
-    }, 600);
+    const body = [formData.message, '', 'Name: ' + formData.name, 'Email: ' + formData.email, 'Phone: ' + formData.phone].join('\n');
+    window.location.href = `mailto:${BRAND.email}?subject=${encodeURIComponent(formData.subject)}&body=${encodeURIComponent(body)}`;
+    setSubmitted(true);
   };
 
   const handleWhatsApp = () => {
@@ -145,17 +143,17 @@ export const ContactPage: React.FC = () => {
                 <CheckCircle2 className="w-8 h-8" />
               </div>
               <h3 className="font-display font-bold text-xl text-[#16324F]">
-                Thank you! Message Received
+                Send Your Email Draft
               </h3>
               <p className="text-sm text-[#66747E] max-w-md mx-auto">
-                One of our fleet concierge specialists will review your inquiry and get back to you within 2 hours.
+                Complete sending in your email app. Your message has not been sent by this website. If no email app opened, contact us using the email address or WhatsApp link on this page.
               </p>
               <button
                 type="button"
                 onClick={() => setSubmitted(false)}
                 className="text-xs font-semibold text-[#2F6F6D] hover:underline pt-2 cursor-pointer"
               >
-                Send another message
+                Back to message
               </button>
             </div>
           ) : (
@@ -241,10 +239,9 @@ export const ContactPage: React.FC = () => {
 
               <button
                 type="submit"
-                disabled={submitting}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#D97745] hover:bg-[#c26534] disabled:bg-[#CAD5DF] text-white px-8 py-3.5 rounded-xl font-bold text-sm shadow-sm transition-all cursor-pointer"
               >
-                <span>{submitting ? 'Sending Message...' : 'Send Message'}</span>
+                <span>Open Email Draft</span>
                 <Send className="w-4 h-4" />
               </button>
             </form>

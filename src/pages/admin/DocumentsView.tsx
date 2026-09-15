@@ -171,7 +171,7 @@ export const DocumentsView: React.FC = () => {
         onSuccess={refreshAll}
       />
 
-      {/* Simulated Preview Modal */}
+      {/* Private Document Preview */}
       {previewDoc && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
           <div className="w-full max-w-xl bg-white rounded-xl shadow-2xl overflow-hidden border border-[#DCE2E6]">
