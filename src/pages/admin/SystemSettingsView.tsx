@@ -33,6 +33,9 @@ export const SystemSettingsView: React.FC = () => {
   const [hotelDeliveryFee, setHotelDeliveryFee] = useState(500);
   const [serviceIntervalKm, setServiceIntervalKm] = useState(10000);
   const [complianceNoticeDays, setComplianceNoticeDays] = useState(30);
+  const [serviceNoticeDays, setServiceNoticeDays] = useState(14);
+  const [serviceNoticeKm, setServiceNoticeKm] = useState(1500);
+  const [returnNoticeDays, setReturnNoticeDays] = useState(1);
   const [currencySymbol, setCurrencySymbol] = useState('Rs (MUR)');
 
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -48,6 +51,7 @@ export const SystemSettingsView: React.FC = () => {
       setDefaultDeposit(s.defaultDeposit); setAirportDeliveryFee(s.airportDeliveryFee);
       setHotelDeliveryFee(s.hotelDeliveryFee); setServiceIntervalKm(s.serviceIntervalKm);
       setComplianceNoticeDays(s.complianceNoticeDays); setCurrencySymbol(s.currencySymbol);
+      setServiceNoticeDays(s.serviceNoticeDays ?? 14); setServiceNoticeKm(s.serviceNoticeKm ?? 1500); setReturnNoticeDays(s.returnNoticeDays ?? 1);
       setVersion(s.version); setLoaded(true);
     }).catch(e => setSaveError(e.message));
   }, []);
@@ -55,7 +59,7 @@ export const SystemSettingsView: React.FC = () => {
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault(); setSaving(true); setSavedSuccess(false); setSaveError('');
     try {
-      const result = await update<{version:number}>('settings', 'company', {companyName,brn,vatNumber,phone,email,headquarters,defaultDeposit,airportDeliveryFee,hotelDeliveryFee,serviceIntervalKm,complianceNoticeDays,currencySymbol,version});
+      const result = await update<{version:number}>('settings', 'company', {companyName,brn,vatNumber,phone,email,headquarters,defaultDeposit,airportDeliveryFee,hotelDeliveryFee,serviceIntervalKm,complianceNoticeDays,serviceNoticeDays,serviceNoticeKm,returnNoticeDays,currencySymbol,version});
       setVersion(result.version); setSavedSuccess(true); await refreshAll();
     } catch (e) { setSaveError(e instanceof Error ? e.message : 'Unable to save settings.'); }
     finally { setSaving(false); }
@@ -233,14 +237,29 @@ export const SystemSettingsView: React.FC = () => {
               </label>
               <input
                 type="number"
+                aria-label="Compliance advance notice (days)"
+                min={1} max={365} required
                 value={complianceNoticeDays}
                 onChange={(e) => setComplianceNoticeDays(Number(e.target.value))}
                 className="w-full px-3 py-2 rounded-lg border border-[#DCE2E6] text-[#24313A] focus:outline-none focus:border-[#35658A]"
               />
               <span className="text-[11px] text-[#65727B] mt-1 block">
-                Flags Fitness, Insurance, and MVL in the urgent dashboard queue
+                Flags Fitness, Insurance, MVL and Licence in the action queue
               </span>
             </div>
+            <label className="font-semibold text-[#24313A]">Service advance notice (days)
+              <input type="number" min={1} max={365} required value={serviceNoticeDays} onChange={e => setServiceNoticeDays(Number(e.target.value))} className="mt-1 block w-full rounded-lg border p-2" />
+              <span className="mt-1 block text-[11px] font-normal text-[#65727B]">Warn before the next service date.</span>
+            </label>
+            <label className="font-semibold text-[#24313A]">Service advance notice (km)
+              <input type="number" min={0} max={100000} required value={serviceNoticeKm} onChange={e => setServiceNoticeKm(Number(e.target.value))} className="mt-1 block w-full rounded-lg border p-2" />
+              <span className="mt-1 block text-[11px] font-normal text-[#65727B]">Warn when the recorded odometer is within this distance of the next service.</span>
+            </label>
+            <label className="font-semibold text-[#24313A]">Return advance notice (days)
+              <input type="number" min={0} max={30} required value={returnNoticeDays} onChange={e => setReturnNoticeDays(Number(e.target.value))} className="mt-1 block w-full rounded-lg border p-2" />
+              <span className="mt-1 block text-[11px] font-normal text-[#65727B]">Covers active rentals and internal assignments.</span>
+            </label>
+            <p className="text-xs text-[#65727B]">These settings control in-app reminders. Email, SMS and push delivery are not enabled by these settings.</p>
           </div>
         </div>
 

@@ -32,7 +32,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden" style={{ backgroundColor: ADMIN_THEME.background }}>
+    <div className="admin-interactions flex h-screen w-screen overflow-hidden" style={{ backgroundColor: ADMIN_THEME.background }}>
       {/* Sidebar */}
       <AdminSidebar
         currentTab={effectiveTab}

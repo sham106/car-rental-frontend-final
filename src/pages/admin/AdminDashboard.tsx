@@ -1,3 +1,4 @@
+import { OperationalActionCenter } from '../../components/admin/OperationalActionCenter';
 import React from 'react';
 import {
   Car,
@@ -56,12 +57,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // Alerts
   const pendingBookings = bookings.filter((b) => b.bookingStatus === 'pending');
-  const expiredCompliance = compliance.filter((c) => c.status === 'Expired');
-  const expiringCompliance = compliance.filter((c) => c.status === 'Expiring Soon');
-  const vehiclesDueService = vehicles.filter((v) => {
-    if (!v.nextServiceMileage) return false;
-    return v.nextServiceMileage - v.mileage <= 1500;
-  });
 
   return (
     <div className="space-y-6">
@@ -86,6 +81,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </button>
         </div>
       </div>
+
+      <OperationalActionCenter />
 
       {/* Primary KPI Grid: High-density Operational Statuses */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
@@ -210,17 +207,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <div className="w-full sm:w-72">
           <div className="h-3 bg-[#F4F6F7] rounded-full overflow-hidden flex border border-[#DCE2E6]">
             <div
-              style={{ width: `${(rentedCount / totalVehicles) * 100}%` }}
+              style={{ width: `${(rentedCount / (totalVehicles || 1)) * 100}%` }}
               className="bg-[#35658A] h-full"
               title={`Rented: ${rentedCount}`}
             />
             <div
-              style={{ width: `${(assignedCount / totalVehicles) * 100}%` }}
+              style={{ width: `${(assignedCount / (totalVehicles || 1)) * 100}%` }}
               className="bg-[#77838C] h-full"
               title={`Assigned: ${assignedCount}`}
             />
             <div
-              style={{ width: `${(reservedCount / totalVehicles) * 100}%` }}
+              style={{ width: `${(reservedCount / (totalVehicles || 1)) * 100}%` }}
               className="bg-[#C8DCF0] h-full"
               title={`Reserved: ${reservedCount}`}
             />
@@ -240,7 +237,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       </div>
 
       {/* Critical Operational Action Rows */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         {/* Pending Booking Requests Action Box */}
         <div
           className="p-5 rounded-xl border bg-white shadow-2xs flex flex-col justify-between"
@@ -299,132 +296,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
         </div>
 
-        {/* Compliance & Legal Grounding Alerts */}
-        <div
-          className="p-5 rounded-xl border bg-white shadow-2xs flex flex-col justify-between"
-          style={{ borderColor: ADMIN_THEME.border }}
-        >
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-[#DCE2E6]">
-              <div className="flex items-center gap-2">
-                <ShieldAlert className="w-4 h-4 text-[#B9534F]" />
-                <h2 className="text-sm font-bold text-[#24313A]">
-                  Compliance & Expirations ({expiredCompliance.length + expiringCompliance.length})
-                </h2>
-              </div>
-              <button
-                type="button"
-                onClick={() => onNavigate('compliance')}
-                className="text-xs text-[#B9534F] hover:underline font-medium flex items-center gap-1 cursor-pointer"
-              >
-                Manage compliance <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            <div className="mt-3 space-y-2.5">
-              {expiredCompliance.length === 0 && expiringCompliance.length === 0 ? (
-                <div className="py-6 text-center text-xs text-[#4F7D61]">
-                  All fleet vehicle fitness, insurance, and road taxes are valid.
-                </div>
-              ) : (
-                <>
-                  {expiredCompliance.map((c) => (
-                    <div
-                      key={c.id}
-                      className="p-3 rounded-lg border border-[#F8D7D5] bg-[#FDEDEC] flex items-center justify-between text-xs"
-                    >
-                      <div>
-                        <span className="font-semibold text-[#B9534F]">{c.vehicleReg}</span>
-                        <span className="text-[#24313A] ml-2 font-medium">
-                          {c.complianceType} EXPIRED on {c.expiryDate}
-                        </span>
-                        <div className="text-[11px] text-[#65727B]">Carrier: {c.provider}</div>
-                      </div>
-                      <StatusBadge status="Expired" type="compliance" size="sm" />
-                    </div>
-                  ))}
-
-                  {expiringCompliance.slice(0, 2).map((c) => (
-                    <div
-                      key={c.id}
-                      className="p-3 rounded-lg border border-[#F2DDBB] bg-[#FFF9F2] flex items-center justify-between text-xs"
-                    >
-                      <div>
-                        <span className="font-semibold text-[#24313A]">{c.vehicleReg}</span>
-                        <span className="text-[#B86645] ml-2 font-medium">
-                          {c.complianceType} expires on {c.expiryDate}
-                        </span>
-                        <div className="text-[11px] text-[#65727B]">Provider: {c.provider}</div>
-                      </div>
-                      <StatusBadge status="Expiring Soon" type="compliance" size="sm" />
-                    </div>
-                  ))}
-                </>
-              )}
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Fleet Maintenance Approaching Schedule & Live Audit History */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Service Approaching */}
-        <div
-          className="p-5 rounded-xl border bg-white shadow-2xs"
-          style={{ borderColor: ADMIN_THEME.border }}
-        >
-          <div className="flex items-center justify-between pb-3 border-b border-[#DCE2E6]">
-            <div className="flex items-center gap-2">
-              <Wrench className="w-4 h-4 text-[#B86645]" />
-              <h2 className="text-sm font-bold text-[#24313A]">
-                Maintenance Proximity Alerts ({vehiclesDueService.length})
-              </h2>
-            </div>
-            <button
-              type="button"
-              onClick={() => onNavigate('maintenance')}
-              className="text-xs text-[#35658A] hover:underline font-medium cursor-pointer"
-            >
-              All maintenance
-            </button>
-          </div>
-
-          <div className="mt-3 space-y-2.5">
-            {vehiclesDueService.length === 0 ? (
-              <div className="py-6 text-center text-xs text-[#65727B]">
-                No vehicles currently overdue for service.
-              </div>
-            ) : (
-              vehiclesDueService.map((v) => {
-                const diff = (v.nextServiceMileage || 0) - v.mileage;
-                return (
-                  <div
-                    key={v.id}
-                    className="p-3 rounded-lg border border-[#DCE2E6] bg-[#F8F9FA] flex items-center justify-between text-xs"
-                  >
-                    <div>
-                      <span className="font-semibold text-[#24313A]">{v.registrationNumber}</span>
-                      <span className="text-[#65727B] ml-2">
-                        {v.brand} {v.model}
-                      </span>
-                      <div className="text-[11px] text-[#B86645] font-medium mt-0.5">
-                        Current: {v.mileage.toLocaleString()} km · Due: {v.nextServiceMileage?.toLocaleString()} km ({diff} km left)
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => onNavigate('maintenance')}
-                      className="px-2.5 py-1 text-[11px] font-semibold text-[#24313A] bg-white border border-[#DCE2E6] hover:bg-[#F4F6F7] rounded-md cursor-pointer"
-                    >
-                      Log Service
-                    </button>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-
+      <div className="grid grid-cols-1 gap-6">
         {/* Live Operational Audit Feed */}
         <div
           className="p-5 rounded-xl border bg-white shadow-2xs"

@@ -46,6 +46,46 @@ body {
   color: var(--color-text-primary);
 }
 
+/* Consistent click and keyboard cues across admin forms, profiles and dialogs. */
+.admin-interactions :where(button, a[href], select, [role="button"], input[type="checkbox"], input[type="radio"], input[type="file"]):not(:disabled):not([aria-disabled="true"]) {
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease, filter 150ms ease;
+}
+
+.admin-interactions input[type="file"]::file-selector-button {
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .admin-interactions :where(button, [role="button"]):not(:disabled):not([aria-disabled="true"]):hover {
+    filter: brightness(0.95);
+    box-shadow: 0 2px 6px rgb(23 50 77 / 16%);
+  }
+
+  .admin-interactions a[href]:not([aria-disabled="true"]):hover {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+  }
+}
+
+.admin-interactions :where(button, a[href], input, select, textarea, [role="button"]):focus-visible {
+  outline: 3px solid #35658a;
+  outline-offset: 3px;
+}
+
+.admin-interactions :where(button, select, input, textarea):disabled,
+.admin-interactions [aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-interactions :where(button, a[href], select, [role="button"], input) {
+    transition: none;
+  }
+}
+
 h1, h2, h3, h4, h5, h6, .font-display {
   font-family: var(--font-display);
 }

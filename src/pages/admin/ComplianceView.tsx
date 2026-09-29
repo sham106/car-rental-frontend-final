@@ -1,3 +1,4 @@
+import { OperationalAlertCard } from '../../components/admin/OperationalActionCenter';
 import { ComplianceRecord } from '../../types/admin';
 import React, { useState } from 'react';
 import { ShieldAlert, ShieldCheck, Plus, Search, AlertTriangle, Clock, Calendar, CheckCircle2 } from 'lucide-react';
@@ -7,20 +8,30 @@ import { UploadDocumentModal } from '../../components/admin/UploadDocumentModal'
 import { ADMIN_THEME } from '../../constants/adminTheme';
 
 export const ComplianceView: React.FC = () => {
-  const { compliance, vehicles, refreshAll } = useAdminData();
+  const { compliance, vehicles, notifications, refreshAll } = useAdminData();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [tabFilter, setTabFilter] = useState<'all' | 'expired' | 'next30' | 'valid'>('all');
 
   const [renewalRecord, setRenewalRecord] = useState<ComplianceRecord | undefined>();
 
+  const [showHistory, setShowHistory] = useState(false);
+  const latest = new Map<string, ComplianceRecord>();
+  for (const record of compliance) {
+    const key = `${record.vehicleId}:${record.complianceType}`;
+    const previous = latest.get(key);
+    if (!previous || record.expiryDate > previous.expiryDate || (record.expiryDate === previous.expiryDate && record.createdAt > previous.createdAt)) latest.set(key, record);
+  }
+  const currentRecords = Array.from(latest.values());
+  const listedRecords = showHistory ? compliance : currentRecords;
+
   const now = new Date().getTime();
 
-  const expiredList = compliance.filter((c) => c.status === 'Expired');
-  const expiringSoonList = compliance.filter((c) => c.status === 'Expiring Soon');
-  const validList = compliance.filter((c) => c.status === 'Valid');
+  const expiredList = currentRecords.filter((c) => c.status === 'Expired');
+  const expiringSoonList = currentRecords.filter((c) => c.status === 'Expiring Soon');
+  const validList = currentRecords.filter((c) => c.status === 'Valid');
 
-  const filtered = compliance.filter((c) => {
+  const filtered = listedRecords.filter((c) => {
     if (tabFilter === 'expired' && c.status !== 'Expired') return false;
     if (tabFilter === 'next30' && c.status !== 'Expiring Soon') return false;
     if (tabFilter === 'valid' && c.status !== 'Valid') return false;
@@ -60,6 +71,9 @@ export const ComplianceView: React.FC = () => {
         </button>
       </div>
 
+      {notifications.some(n => n.id.startsWith('missing:compliance:')) && <section aria-label="Missing compliance records" className="grid gap-3 md:grid-cols-2">
+        {notifications.filter(n => n.id.startsWith('missing:compliance:')).map(alert => <OperationalAlertCard key={alert.id} alert={alert} />)}
+      </section>}
       {/* Expiry Priority Tabs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div
@@ -87,12 +101,12 @@ export const ComplianceView: React.FC = () => {
           style={{ borderColor: ADMIN_THEME.border }}
         >
           <div className="flex items-center justify-between text-[11px] font-semibold text-[#B86645] uppercase tracking-wider">
-            <span>Expiring in 30 Days</span>
+            <span>Expiring Soon</span>
             <Clock className="w-4 h-4" />
           </div>
           <div className="mt-1 text-2xl font-bold text-[#B86645]">{expiringSoonList.length}</div>
           <div className="mt-1 text-[11px] text-[#65727B]">
-            Schedule renewals before grace period
+            Within the configured advance-notice window
           </div>
         </div>
 
@@ -114,6 +128,8 @@ export const ComplianceView: React.FC = () => {
         </div>
       </div>
 
+      <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={showHistory} onChange={e => { setShowHistory(e.target.checked); setTabFilter('all'); }} />Show previous certificates and renewal history</label>
+      <p className="text-xs text-[#65727B]">Summary counts use the latest certificate for each car and type. Previous expired certificates do not create a new expiry alert after renewal.</p>
       {/* Filter and Search Bar */}
       <div
         className="p-3.5 rounded-xl border bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
@@ -138,7 +154,7 @@ export const ComplianceView: React.FC = () => {
               tabFilter === 'all' ? 'bg-[#17324D] text-white' : 'text-[#65727B] hover:bg-gray-100'
             }`}
           >
-            All ({compliance.length})
+            {showHistory ? 'History' : 'Current'} ({listedRecords.length})
           </button>
           <button
             type="button"
@@ -156,7 +172,7 @@ export const ComplianceView: React.FC = () => {
               tabFilter === 'next30' ? 'bg-[#B86645] text-white' : 'text-[#65727B] hover:bg-gray-100'
             }`}
           >
-            Next 30 Days ({expiringSoonList.length})
+            Due Soon ({expiringSoonList.length})
           </button>
         </div>
       </div>

@@ -37,10 +37,11 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   setIsCollapsed,
   onOpenWebsite,
 }) => {
-  const { bookings, compliance, maintenance } = useAdminData();
+  const { bookings, notifications } = useAdminData();
 
   const pendingBookings = bookings.filter((b) => b.bookingStatus === 'pending').length;
-  const complianceIssues = compliance.filter((c) => c.status === 'Expired' || c.status === 'Expiring Soon').length;
+  const complianceIssues = notifications.filter(n => n.requiresAction && (n.type === 'compliance_expiring' || n.id.startsWith('missing:compliance:'))).length;
+  const serviceIssues = notifications.filter(n => n.requiresAction && (n.type === 'service_due' || n.id.startsWith('missing:service:'))).length;
 
   const NAV_SECTIONS = [
     {
@@ -67,7 +68,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     {
       title: 'OPERATIONS & COMPLIANCE',
       items: [
-        { id: 'maintenance', label: 'Maintenance', icon: Wrench },
+        { id: 'maintenance', label: 'Maintenance', icon: Wrench, badge: serviceIssues, badgeColor: '#B86645' },
         { id: 'compliance', label: 'Compliance & Legal', icon: ShieldAlert, badge: complianceIssues, badgeColor: '#B9534F' },
         { id: 'documents', label: 'Vehicle Documents', icon: FileText },
       ],

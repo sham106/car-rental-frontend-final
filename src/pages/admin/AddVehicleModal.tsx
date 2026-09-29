@@ -50,6 +50,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
   // Operational
   const [mileage, setMileage] = useState<number>(0);
   const [nextServiceMileage, setNextServiceMileage] = useState<number>(20000);
+  const [nextServiceDate, setNextServiceDate] = useState('');
   const [operationalStatus, setOperationalStatus] = useState<AdminOperationalStatus>('available');
   const [published, setPublished] = useState(false);
   const [featured, setFeatured] = useState(false);
@@ -95,6 +96,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
       setPurchaseDate(vehicleToEdit.purchaseDate || '');
       setMileage(vehicleToEdit.mileage);
       setNextServiceMileage(vehicleToEdit.nextServiceMileage || vehicleToEdit.mileage + 10000);
+      setNextServiceDate(vehicleToEdit.nextServiceDate || '');
       setOperationalStatus(vehicleToEdit.operationalStatus);
       setPublished(vehicleToEdit.published);
       setFeatured(vehicleToEdit.featured);
@@ -192,6 +194,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
           purchaseDate,
           mileage: Number(mileage),
           nextServiceMileage: Number(nextServiceMileage),
+          nextServiceDate,
           operationalStatus,
           published,
           featured,
@@ -224,6 +227,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
           purchaseDate,
           mileage: Number(mileage),
           nextServiceMileage: Number(nextServiceMileage),
+          nextServiceDate,
           operationalStatus,
           published,
           featured,
@@ -561,6 +565,10 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                 />
               </div>
 
+              <label className="block font-semibold text-[#24313A]">Next Service Due Date
+                <input type="date" value={nextServiceDate} onChange={e => setNextServiceDate(e.target.value)} className="mt-1 w-full rounded-lg border border-[#DCE2E6] p-2 text-xs" />
+                <span className="mt-1 block font-normal text-[#65727B]">Enter a date to receive advance service-date reminders.</span>
+              </label>
               <div>
                 <label className="block font-semibold text-[#24313A] mb-1">Initial Status</label>
                 <select

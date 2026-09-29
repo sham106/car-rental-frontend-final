@@ -1,3 +1,4 @@
+import { OperationalAlertCard } from '../../components/admin/OperationalActionCenter';
 import React, { useState } from 'react';
 import { Wrench, Plus, Search, AlertCircle, Calendar, DollarSign, Filter } from 'lucide-react';
 import { useAdminData } from '../../context/AdminDataContext';
@@ -5,17 +6,14 @@ import { RecordMaintenanceModal } from '../../components/admin/RecordMaintenance
 import { ADMIN_THEME } from '../../constants/adminTheme';
 
 export const MaintenanceView: React.FC = () => {
-  const { maintenance, vehicles, refreshAll } = useAdminData();
+  const { maintenance, vehicles, notifications, refreshAll } = useAdminData();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedServiceType, setSelectedServiceType] = useState('all');
 
   const totalSpend = maintenance.reduce((sum, m) => sum + m.totalCost, 0);
 
-  const overdueVehicles = vehicles.filter((v) => {
-    if (!v.nextServiceMileage) return false;
-    return v.nextServiceMileage - v.mileage <= 1500;
-  });
+  const serviceAlerts = notifications.filter(n => n.requiresAction && (n.type === 'service_due' || n.id.startsWith('missing:service:')));
 
   const filtered = maintenance.filter((m) => {
     if (selectedServiceType !== 'all' && m.serviceType !== selectedServiceType) return false;
@@ -68,12 +66,12 @@ export const MaintenanceView: React.FC = () => {
 
         <div className="p-4 rounded-xl border bg-white shadow-2xs" style={{ borderColor: ADMIN_THEME.border }}>
           <div className="text-[11px] font-semibold text-[#B86645] uppercase tracking-wider">
-            Vehicles Nearing Service
+            Service / Schedule Actions
           </div>
           <div className="mt-1 text-2xl font-bold text-[#B86645]">
-            {overdueVehicles.length}
+            {serviceAlerts.length}
           </div>
-          <div className="mt-1 text-[11px] text-[#65727B]">Within 1,500 km of service threshold</div>
+          <div className="mt-1 text-[11px] text-[#65727B]">Date/mileage reminders and missing schedules</div>
         </div>
 
         <div className="p-4 rounded-xl border bg-white shadow-2xs" style={{ borderColor: ADMIN_THEME.border }}>
@@ -87,6 +85,7 @@ export const MaintenanceView: React.FC = () => {
         </div>
       </div>
 
+      {serviceAlerts.length > 0 && <section aria-label="Service reminders" className="grid gap-3 md:grid-cols-2">{serviceAlerts.map(alert => <OperationalAlertCard key={alert.id} alert={alert} />)}</section>}
       {/* Control Bar */}
       <div
         className="p-3.5 rounded-xl border bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"

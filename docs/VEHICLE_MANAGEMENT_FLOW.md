@@ -34,6 +34,8 @@ Fitness and Insurance are separate certifications. Broker belongs to the insuran
 - Historical service could fail to update next-service mileage: schedule now follows the latest dated service without decreasing the odometer.
 - Return mileage was guessed by adding 150 km: starts at the recorded odometer instead, for staff to enter the actual reading.
 - Mobile profile header could hide the close control: header now wraps and keeps the close button accessible.
+- Admin controls lacked consistent interaction cues: buttons, links and selectors now show pointer cursors, hover feedback and visible keyboard focus; disabled controls show a not-allowed cursor. Reduced-motion preferences are respected.
+- Renewal history was not clearly labelled: certification cards now distinguish the latest record from previous records. Renewal preserves earlier policy details, premiums, brokers and uploaded files; this is verified in API and browser tests.
 
 ## Verification
 

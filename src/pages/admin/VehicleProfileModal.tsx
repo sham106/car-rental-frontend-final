@@ -463,7 +463,7 @@ export const VehicleProfileModal: React.FC<VehicleProfileModalProps> = ({
           {/* TAB 4: COMPLIANCE & DOCUMENTS */}
           {activeTab === 'compliance' && (
             <div className="space-y-6">
-              <p>The Overview checklist shows the latest certifications. Previous certificates remain here for reference.</p>
+              <p>Renewals create a new record. Previous policy details and uploaded certificates remain available below. The Overview checklist shows the latest certification for each type.</p>
               <div>
                 <h4 className="font-bold text-xs uppercase tracking-wider text-[#24313A] mb-2">
                   Certification & Renewal History
@@ -471,6 +471,9 @@ export const VehicleProfileModal: React.FC<VehicleProfileModalProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {vehicleCompliance.map((c) => (
                     <div key={c.id} className="p-3 bg-[#F8F9FA] rounded-lg border border-[#DCE2E6]">
+                      <div className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-[#35658A]">
+                        {latestCompliance.some(item => item.record?.id === c.id) ? 'Latest record' : 'Previous record'}
+                      </div>
                       <div className="flex justify-between font-semibold text-[#24313A]">
                         <span>{c.complianceType}</span>
                         <span className={`text-[10px] ${c.status === 'Expired' ? 'text-[#B9534F]' : 'text-[#4F7D61]'}`}>

@@ -78,7 +78,18 @@ const AdminContent: React.FC = () => {
   const [profileVehicle, setProfileVehicle] = useState<AdminVehicle | null>(null);
   const [statusVehicle, setStatusVehicle] = useState<AdminVehicle | null>(null);
 
-  const { refreshAll, changeVehicleStatus } = useAdminData();
+  const { vehicles, refreshAll, changeVehicleStatus } = useAdminData();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const id = params.get('vehicleId');
+    if (!id) return;
+    const selected = vehicles.find(v => v.id === id);
+    if (!selected) return;
+    setProfileVehicle(selected);
+    params.delete('vehicleId');
+    navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
+  }, [location.search, vehicles, navigate]);
 
   const handleOpenAdd = () => {
     setVehicleToEdit(null);

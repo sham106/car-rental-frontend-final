@@ -304,7 +304,15 @@ export interface AuditLog {
 
 export interface AdminNotification {
   id: string;
-  type: 'booking_request' | 'insurance_expiring' | 'vehicle_due_back' | 'service_overdue' | 'vehicle_returned';
+  type: 'booking_request' | 'insurance_expiring' | 'vehicle_due_back' | 'service_overdue' | 'vehicle_returned' | 'compliance_expiring' | 'service_due' | 'records_missing';
+  requiresAction?: boolean;
+  priority?: 'overdue' | 'due_today' | 'upcoming' | 'missing';
+  vehicleId?: string;
+  vehicleReg?: string;
+  actionLabel?: string;
+  dueDate?: string;
+  daysRemaining?: number;
+  mileageRemaining?: number;
   title: string;
   description: string;
   message?: string; // alias

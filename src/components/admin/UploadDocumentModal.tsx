@@ -136,6 +136,7 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {renewalRecord && <p className="rounded-lg bg-[#F1F6FA] p-3 text-xs text-[#17324D]">This renewal saves a new record. The previous details and uploaded file stay available in the vehicle's Compliance & Documents history.</p>}
           {vehicle ? (
             <div className="p-3 bg-[#F8F9FA] rounded-lg border border-[#DCE2E6] text-xs">
               <span className="text-[#65727B]">Vehicle:</span>
