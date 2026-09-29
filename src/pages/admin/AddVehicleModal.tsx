@@ -4,6 +4,7 @@ import { X, Car, Upload, Plus, Trash2, AlertCircle, Check, Image as ImageIcon, S
 import { AdminVehicle, AdminCategory, AdminOperationalStatus } from '../../types/admin';
 import { useAdminData } from '../../context/AdminDataContext';
 import { adminVehicleService } from '../../services/admin/adminVehicleService';
+import { RecordEditor } from '../../components/admin/RecordEditor';
 import { ADMIN_THEME } from '../../constants/adminTheme';
 
 interface AddVehicleModalProps {
@@ -19,7 +20,9 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { owners } = useAdminData();
+  const { owners, refreshAll } = useAdminData();
+
+  const [addingOwner, setAddingOwner] = useState(false);
 
   // Form Fields
   const [brand, setBrand] = useState('');
@@ -40,7 +43,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
   // Commercial
   const [dailyRate, setDailyRate] = useState<number>(2200);
   const [ownerId, setOwnerId] = useState('');
-  const [purchaseValue, setPurchaseValue] = useState<number>(0);
+  const [purchaseValue, setPurchaseValue] = useState<number | ''>('');
   const [currentValue, setCurrentValue] = useState<number>(0);
   const [purchaseDate, setPurchaseDate] = useState('');
 
@@ -48,7 +51,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
   const [mileage, setMileage] = useState<number>(0);
   const [nextServiceMileage, setNextServiceMileage] = useState<number>(20000);
   const [operationalStatus, setOperationalStatus] = useState<AdminOperationalStatus>('available');
-  const [published, setPublished] = useState(true);
+  const [published, setPublished] = useState(false);
   const [featured, setFeatured] = useState(false);
   const [description, setDescription] = useState(
     ''
@@ -102,7 +105,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
     }
   }, [vehicleToEdit]);
 
-  useEffect(() => { if (!vehicleToEdit && owners.length && !owners.some(o => o.id === ownerId)) setOwnerId(owners[0].id); }, [owners, vehicleToEdit, ownerId]);
+
 
   if (!isOpen) return null;
 
@@ -148,8 +151,8 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!brand.trim() || !model.trim() || !registrationNumber.trim() || !vin.trim()) {
-      setError('Brand, model, registration number, and VIN are required fields.');
+    if (!brand.trim() || !model.trim() || !registrationNumber.trim() || !vin.trim() || !color.trim() || !engineNumber.trim() || !ownerId || !purchaseDate || purchaseValue === '') {
+      setError('Complete the vehicle identification, owner, purchase date and purchase value before saving.');
       return;
     }
 
@@ -158,7 +161,8 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
       setError('');
 
       const ownerObj = owners.find((o) => o.id === ownerId);
-      const ownerName = ownerObj ? ownerObj.name : 'Oceane Fleet Operations Ltd';
+      if (!ownerObj) throw new Error('Select a registered owner or add one.');
+      const ownerName = ownerObj.name;
 
       const finalPhotos = photos;
 
@@ -270,6 +274,10 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
 
         {/* Scrollable Form Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto flex-1 text-xs">
+          {!vehicleToEdit && <div className="rounded-lg bg-[#F1F6FA] p-3 text-sm">
+            <strong>1. Register vehicle → 2. Add compliance → 3. Record service history</strong>
+            <p className="mt-1 text-xs">Save to open the car profile and complete its documents and maintenance. New cars start hidden from the website; publish when ready. Assignments and bookings are recorded from the profile.</p>
+          </div>}
           {/* Section 1: Identification & Specs */}
           <div>
             <h4 className="text-xs font-bold text-[#24313A] uppercase tracking-wider mb-3 pb-1 border-b border-[#DCE2E6]">
@@ -351,6 +359,8 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                 </label>
                 <input
                   type="text"
+                  required
+                  aria-label="Engine number"
                   value={engineNumber}
                   onChange={(e) => setEngineNumber(e.target.value)}
                   placeholder="Engine block code"
@@ -378,6 +388,8 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                 <label className="block font-semibold text-[#24313A] mb-1">Color</label>
                 <input
                   type="text"
+                  required
+                  aria-label="Color"
                   value={color}
                   onChange={(e) => setColor(e.target.value)}
                   placeholder="e.g. Polar White"
@@ -448,16 +460,19 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                   Registered Fleet Owner <span className="text-[#B9534F]">*</span>
                 </label>
                 <select
+                  aria-label="Registered fleet owner"
                   value={ownerId}
                   onChange={(e) => setOwnerId(e.target.value)}
                   className="w-full p-2 rounded-lg border border-[#DCE2E6] bg-white text-xs text-[#24313A]"
                 >
+                  <option value="">Choose an owner</option>
                   {owners.map((o) => (
                     <option key={o.id} value={o.id}>
                       {o.name} ({o.ownerType})
                     </option>
                   ))}
                 </select>
+                <button type="button" className="mt-2 text-[#35658A] underline" onClick={() => setAddingOwner(true)}>Add owner without leaving this form</button>
               </div>
 
               <div>
@@ -474,9 +489,11 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
               </div>
 
               <div>
-                <label className="block font-semibold text-[#24313A] mb-1">Purchase Date</label>
+                <label className="block font-semibold text-[#24313A] mb-1">Purchase Date *</label>
                 <input
                   type="date"
+                  required
+                  aria-label="Purchase date"
                   value={purchaseDate}
                   onChange={(e) => setPurchaseDate(e.target.value)}
                   className="w-full p-2 rounded-lg border border-[#DCE2E6] bg-white text-xs text-[#24313A]"
@@ -489,8 +506,12 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                 </label>
                 <input
                   type="number"
+                  required
+                  aria-label="Purchase value (Rs)"
+                  min={0}
+                  step="0.01"
                   value={purchaseValue}
-                  onChange={(e) => setPurchaseValue(Number(e.target.value))}
+                  onChange={(e) => setPurchaseValue(e.target.value === '' ? '' : Number(e.target.value))}
                   className="w-full p-2 rounded-lg border border-[#DCE2E6] bg-white text-xs text-[#24313A]"
                 />
               </div>
@@ -543,14 +564,13 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
               <div>
                 <label className="block font-semibold text-[#24313A] mb-1">Initial Status</label>
                 <select
+                  disabled={Boolean(vehicleToEdit)}
                   value={operationalStatus}
                   onChange={(e) => setOperationalStatus(e.target.value as AdminOperationalStatus)}
                   className="w-full p-2 rounded-lg border border-[#DCE2E6] bg-white text-xs text-[#24313A]"
                 >
                   <option value="available">Available (Ready for hire)</option>
-                  <option value="reserved">Reserved</option>
-                  <option value="rented">Rented</option>
-                  <option value="assigned">Assigned</option>
+                  {vehicleToEdit && ['reserved', 'rented', 'assigned'].includes(operationalStatus) && <option value={operationalStatus}>{operationalStatus}</option>}
                   <option value="in_service">In Service</option>
                   <option value="compliance_hold">Compliance Hold</option>
                   <option value="inactive">Inactive</option>
@@ -806,14 +826,15 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isProcessingImages}
               className="px-5 py-2 text-sm font-medium text-white bg-[#17324D] hover:bg-[#1F4366] disabled:opacity-50 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
             >
-              {isSubmitting ? 'Saving Fleet Data...' : vehicleToEdit ? 'Update Vehicle' : 'Register Fleet Vehicle'}
+              {isSubmitting ? 'Saving Fleet Data...' : vehicleToEdit ? 'Update Vehicle' : 'Save & Continue to Vehicle Profile'}
             </button>
           </div>
         </form>
       </div>
+      {addingOwner && <RecordEditor resource="owners" onClose={() => setAddingOwner(false)} onSaved={refreshAll} onCreated={owner => setOwnerId(owner.id)} />}
     </div>
   );
 };

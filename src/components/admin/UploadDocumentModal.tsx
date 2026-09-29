@@ -1,13 +1,15 @@
 import { uploadFile } from '../../services/api';
 import React, { useState } from 'react';
 import { X, FileText, Upload, Check, AlertCircle } from 'lucide-react';
-import { AdminVehicle, DocumentType } from '../../types/admin';
+import { AdminVehicle, DocumentType, ComplianceRecord } from '../../types/admin';
 import { adminDocumentService } from '../../services/admin/adminDocumentService';
 import { ADMIN_THEME } from '../../constants/adminTheme';
 
 interface UploadDocumentModalProps {
   vehicle: AdminVehicle | null;
   vehiclesList?: AdminVehicle[];
+  initialDocumentType?: DocumentType;
+  renewalRecord?: ComplianceRecord;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => Promise<void>;
@@ -28,6 +30,8 @@ const DOC_TYPES: DocumentType[] = [
 export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
   vehicle,
   vehiclesList = [],
+  initialDocumentType = 'Insurance Certificate',
+  renewalRecord,
   isOpen,
   onClose,
   onSuccess,
@@ -50,10 +54,17 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
   const [error, setError] = useState('');
 
   React.useEffect(() => {
-    if (vehicle) {
-      setSelectedVehicleId(vehicle.id);
-    }
-  }, [vehicle]);
+    if (!isOpen) return;
+    setSelectedVehicleId(vehicle?.id || '');
+    setDocumentType(initialDocumentType);
+    setTitle(initialDocumentType);
+    setIssueDate(''); setExpiryDate(''); setNotes('');
+    setCompany(renewalRecord?.company || renewalRecord?.provider || '');
+    setBroker(renewalRecord?.broker || '');
+    setPolicyNumber(renewalRecord?.policyNumber || '');
+    setPremium(renewalRecord?.premium == null ? '' : String(renewalRecord.premium));
+    setSelectedFile(null); setError('');
+  }, [isOpen, vehicle?.id, initialDocumentType, renewalRecord?.id]);
 
   if (!isOpen) return null;
 
@@ -67,6 +78,7 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
     }
     if (isCompliance && (!issueDate || !expiryDate)) { setError('Enter the issue and expiry dates for this certification.'); return; }
     if (issueDate && expiryDate && expiryDate < issueDate) { setError('Expiry must be on or after issue date.'); return; }
+    if (documentType === 'Insurance Certificate' && (!company.trim() || !policyNumber.trim() || premium === '')) { setError('Enter the insurance company, policy number and premium. Enter 0 if there is no premium.'); return; }
     if (!selectedFile) { setError('Select a PDF or image to upload.'); return; }
     if (!title.trim()) {
       setError('Please provide a document title.');
@@ -110,7 +122,7 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
               <FileText className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-semibold text-[#24313A]">Upload Fleet Document</h3>
+              <h3 className="text-base font-semibold text-[#24313A]">{renewalRecord ? 'Renew Certification' : 'Upload Fleet Document'}</h3>
               <p className="text-xs text-[#65727B] mt-0.5">Attach digital records, policies, and inspections</p>
             </div>
           </div>
@@ -159,7 +171,7 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
               </label>
               <select
                 value={documentType}
-                onChange={(e) => setDocumentType(e.target.value as DocumentType)}
+                onChange={(e) => { setDocumentType(e.target.value as DocumentType); setTitle(e.target.value); setCompany(''); setBroker(''); setPolicyNumber(''); setPremium(''); }}
                 className="w-full text-sm p-2 rounded-lg border border-[#DCE2E6] bg-white text-[#24313A]"
               >
                 {DOC_TYPES.map((dt) => (
@@ -191,6 +203,7 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
               <input
                 type="date"
                 required={isCompliance}
+                aria-label="Issue date"
                 value={issueDate}
                 onChange={(e) => setIssueDate(e.target.value)}
                 className="w-full text-sm p-2 rounded-lg border border-[#DCE2E6] bg-white text-[#24313A]"
@@ -203,6 +216,8 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
               <input
                 type="date"
                 required={isCompliance}
+                aria-label="Expiry date"
+                min={issueDate || undefined}
                 value={expiryDate}
                 onChange={(e) => setExpiryDate(e.target.value)}
                 className="w-full text-sm p-2 rounded-lg border border-[#DCE2E6] bg-white text-[#24313A]"
@@ -214,11 +229,11 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
             <legend className="font-semibold text-sm">Certification details</legend>
             <p className="text-xs text-[#65727B]">This upload also records the certification and its expiry in Compliance.</p>
             <div className="grid grid-cols-2 gap-3">
-              <label className="text-xs">{documentType === 'Insurance Certificate' ? 'Insurance Company' : 'Issuing Authority'}<input className="w-full border rounded p-2 mt-1" value={company} onChange={e => setCompany(e.target.value)} /></label>
-              <label className="text-xs">{documentType === 'Insurance Certificate' ? 'Policy Number' : 'Certificate Number'}<input className="w-full border rounded p-2 mt-1" value={policyNumber} onChange={e => setPolicyNumber(e.target.value)} /></label>
+              <label className="text-xs">{documentType === 'Insurance Certificate' ? 'Insurance Company' : 'Issuing Authority'}<input className="w-full border rounded p-2 mt-1" required={documentType === 'Insurance Certificate'} value={company} onChange={e => setCompany(e.target.value)} /></label>
+              <label className="text-xs">{documentType === 'Insurance Certificate' ? 'Policy Number' : 'Certificate Number'}<input className="w-full border rounded p-2 mt-1" required={documentType === 'Insurance Certificate'} value={policyNumber} onChange={e => setPolicyNumber(e.target.value)} /></label>
               {documentType === 'Insurance Certificate' && <>
-                <label className="text-xs">Broker<input className="w-full border rounded p-2 mt-1" value={broker} onChange={e => setBroker(e.target.value)} /></label>
-                <label className="text-xs">Insurance Premium (Rs)<input type="number" min="0" step="0.01" className="w-full border rounded p-2 mt-1" value={premium} onChange={e => setPremium(e.target.value)} /></label>
+                <label className="text-xs">Broker (optional)<input className="w-full border rounded p-2 mt-1" value={broker} onChange={e => setBroker(e.target.value)} /></label>
+                <label className="text-xs">Insurance Premium (Rs)<input type="number" min="0" step="0.01" className="w-full border rounded p-2 mt-1" required value={premium} onChange={e => setPremium(e.target.value)} /></label>
               </>}
             </div>
           </fieldset>}
@@ -229,17 +244,17 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
             </label>
             <div className="p-4 border-2 border-dashed border-[#DCE2E6] rounded-xl flex flex-col items-center justify-center text-center bg-[#F8F9FA]">
               <Upload className="w-8 h-8 text-[#65727B] mb-2" />
-              <input aria-label="Document file" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onChange={e => setSelectedFile(e.target.files?.[0] || null)} />
+              <input aria-label="Document file" key={`${isOpen}-${vehicle?.id || selectedVehicleId}`} type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onChange={e => setSelectedFile(e.target.files?.[0] || null)} />
               <div className="text-xs font-medium text-[#24313A]">
                 {selectedFile ? (
                   <span className="text-[#4F7D61] font-semibold flex items-center gap-1">
                     <Check className="w-4 h-4 inline" /> {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
                   </span>
                 ) : (
-                  'Drag and drop PDF / image or click to select'
+                  'Choose a PDF or image to attach'
                 )}
               </div>
-              <p className="text-[11px] text-[#65727B] mt-1">Supports PDF, JPG, PNG up to 10 MB</p>
+              <p className="text-[11px] text-[#65727B] mt-1">Supports PDF, JPG, PNG and WebP up to 10 MB</p>
             </div>
           </div>
 

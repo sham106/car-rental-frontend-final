@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Wrench, AlertCircle } from 'lucide-react';
 import { AdminVehicle, MaintenanceServiceType } from '../../types/admin';
 import { adminMaintenanceService } from '../../services/admin/adminMaintenanceService';
+import { getTodayString } from '../../utils/dateUtils';
 import { ADMIN_THEME } from '../../constants/adminTheme';
 
 interface RecordMaintenanceModalProps {
@@ -33,7 +34,7 @@ export const RecordMaintenanceModal: React.FC<RecordMaintenanceModalProps> = ({
 }) => {
   const [selectedVehicleId, setSelectedVehicleId] = useState(vehicle?.id || '');
   const [serviceType, setServiceType] = useState<MaintenanceServiceType>('Routine Service');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(getTodayString());
   const [mileage, setMileage] = useState<number>(vehicle?.mileage ?? 0);
   const [garage, setGarage] = useState('');
   const [description, setDescription] = useState('');
@@ -41,21 +42,26 @@ export const RecordMaintenanceModal: React.FC<RecordMaintenanceModalProps> = ({
   const [labourCost, setLabourCost] = useState<number>(0);
   const [partsCost, setPartsCost] = useState<number>(0);
   const [nextServiceMileage, setNextServiceMileage] = useState<number>((vehicle?.mileage ?? 0) + 10000);
-  const [nextServiceDate, setNextServiceDate] = useState(
-    new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-  );
+  const [nextServiceDate, setNextServiceDate] = useState('');
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   React.useEffect(() => {
-    if (vehicle) {
-      setSelectedVehicleId(vehicle.id);
-      setMileage(vehicle.mileage);
-      setNextServiceMileage(vehicle.mileage + 10000);
+    if (!isOpen) return;
+    setSelectedVehicleId(vehicle?.id || ''); setServiceType('Routine Service'); setDate(getTodayString());
+    setGarage(''); setDescription(''); setPartsReplaced(''); setLabourCost(0); setPartsCost(0);
+    setNextServiceDate(''); setInvoiceNumber(''); setNotes(''); setError('');
+  }, [isOpen, vehicle?.id]);
+
+  React.useEffect(() => {
+    const selected = vehicle || vehiclesList.find(v => v.id === selectedVehicleId);
+    if (selected) {
+      setMileage(selected.mileage);
+      setNextServiceMileage(selected.nextServiceMileage ?? selected.mileage + 10000);
     }
-  }, [vehicle]);
+  }, [vehicle?.id, selectedVehicleId, isOpen]);
 
   if (!isOpen) return null;
 
@@ -68,6 +74,9 @@ export const RecordMaintenanceModal: React.FC<RecordMaintenanceModalProps> = ({
       setError('Please select a vehicle.');
       return;
     }
+    if (date > getTodayString()) { setError('Enter a completed service date, not a future date.'); return; }
+    if (nextServiceMileage <= mileage) { setError('Next service mileage must exceed the mileage at service.'); return; }
+    if (nextServiceDate && nextServiceDate <= date) { setError('Next service date must be after this service.'); return; }
     if (!garage.trim()) {
       setError('Please specify the garage/workshop.');
       return;
@@ -105,7 +114,7 @@ export const RecordMaintenanceModal: React.FC<RecordMaintenanceModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-150">
       <div
-        className="w-full max-w-xl bg-white rounded-xl shadow-2xl border overflow-hidden animate-in zoom-in-95 duration-150"
+        className="w-full max-w-xl max-h-[92vh] overflow-y-auto bg-white rounded-xl shadow-2xl border animate-in zoom-in-95 duration-150"
         style={{ borderColor: ADMIN_THEME.border }}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#DCE2E6] bg-[#F4F6F7]">
@@ -116,7 +125,7 @@ export const RecordMaintenanceModal: React.FC<RecordMaintenanceModalProps> = ({
             <div>
               <h3 className="text-base font-semibold text-[#24313A]">Record Fleet Maintenance</h3>
               <p className="text-xs text-[#65727B] mt-0.5">
-                Log garage service, mechanical parts, and scheduled upkeep
+                Add the last completed service or historical work. The latest dated record supplies the service summary.
               </p>
             </div>
           </div>
@@ -184,10 +193,12 @@ export const RecordMaintenanceModal: React.FC<RecordMaintenanceModalProps> = ({
             </div>
             <div>
               <label className="block text-xs font-semibold text-[#24313A] uppercase tracking-wider mb-1">
-                Date Completed
+                Service Date / Date of Last Service
               </label>
               <input
                 type="date"
+                aria-label="Service date"
+                max={getTodayString()}
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 required
@@ -196,10 +207,12 @@ export const RecordMaintenanceModal: React.FC<RecordMaintenanceModalProps> = ({
             </div>
             <div>
               <label className="block text-xs font-semibold text-[#24313A] uppercase tracking-wider mb-1">
-                Odometer (km)
+                Service Mileage (km)
               </label>
               <input
                 type="number"
+                aria-label="Service mileage (km)"
+                min={0}
                 value={mileage}
                 onChange={(e) => setMileage(Number(e.target.value))}
                 required
@@ -215,6 +228,7 @@ export const RecordMaintenanceModal: React.FC<RecordMaintenanceModalProps> = ({
               </label>
               <input
                 type="text"
+                aria-label="Garage / Workshop"
                 value={garage}
                 onChange={(e) => setGarage(e.target.value)}
                 required
@@ -236,10 +250,11 @@ export const RecordMaintenanceModal: React.FC<RecordMaintenanceModalProps> = ({
 
           <div>
             <label className="block text-xs font-semibold text-[#24313A] uppercase tracking-wider mb-1">
-              Description of Work
+              Maintenance Details / Work Completed
             </label>
             <input
               type="text"
+              aria-label="Maintenance details"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               required
@@ -300,6 +315,9 @@ export const RecordMaintenanceModal: React.FC<RecordMaintenanceModalProps> = ({
               </label>
               <input
                 type="number"
+                aria-label="Mileage next service (km)"
+                min={mileage + 1}
+                required
                 value={nextServiceMileage}
                 onChange={(e) => setNextServiceMileage(Number(e.target.value))}
                 className="w-full text-sm p-2 rounded-lg border border-[#DCE2E6] bg-white text-[#24313A]"

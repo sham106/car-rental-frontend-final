@@ -32,13 +32,14 @@ export const AssignVehicleModal: React.FC<AssignVehicleModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  // Keep state synced with prop
   React.useEffect(() => {
-    if (vehicle) {
-      setSelectedVehicleId(vehicle.id);
-      setMileageOut(vehicle.mileage);
-    }
-  }, [vehicle]);
+    if (!isOpen) return;
+    setSelectedVehicleId(vehicle?.id || ''); setAssignedTo(''); setReason(''); setNotes(''); setError('');
+  }, [isOpen, vehicle?.id]);
+  React.useEffect(() => {
+    const selected = vehicle || vehiclesList.find(v => v.id === selectedVehicleId);
+    if (selected) setMileageOut(selected.mileage);
+  }, [vehicle?.id, selectedVehicleId, isOpen]);
 
   if (!isOpen) return null;
 
@@ -86,7 +87,7 @@ export const AssignVehicleModal: React.FC<AssignVehicleModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-150">
       <div
-        className="w-full max-w-lg bg-white rounded-xl shadow-2xl border overflow-hidden animate-in zoom-in-95 duration-150"
+        className="w-full max-w-lg max-h-[92vh] overflow-y-auto bg-white rounded-xl shadow-2xl border animate-in zoom-in-95 duration-150"
         style={{ borderColor: ADMIN_THEME.border }}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#DCE2E6] bg-[#F4F6F7]">
@@ -155,7 +156,7 @@ export const AssignVehicleModal: React.FC<AssignVehicleModalProps> = ({
               </label>
               <input
                 type="text"
-                value={assignedTo}
+                aria-label="Assigned to" value={assignedTo}
                 onChange={(e) => setAssignedTo(e.target.value)}
                 placeholder="e.g. Kaviraj Seetah (Ops Lead)"
                 required
@@ -188,7 +189,7 @@ export const AssignVehicleModal: React.FC<AssignVehicleModalProps> = ({
               </label>
               <input
                 type="date"
-                value={startDate}
+                aria-label="Date out" value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 required
                 className="w-full text-sm p-2 rounded-lg border border-[#DCE2E6] bg-white text-[#24313A]"
@@ -200,7 +201,7 @@ export const AssignVehicleModal: React.FC<AssignVehicleModalProps> = ({
               </label>
               <input
                 type="date"
-                value={expectedReturnDate}
+                aria-label="Expected date in" value={expectedReturnDate}
                 onChange={(e) => setExpectedReturnDate(e.target.value)}
                 required
                 className="w-full text-sm p-2 rounded-lg border border-[#DCE2E6] bg-white text-[#24313A]"
@@ -212,7 +213,7 @@ export const AssignVehicleModal: React.FC<AssignVehicleModalProps> = ({
               </label>
               <input
                 type="number"
-                value={mileageOut}
+                aria-label="Mileage out" value={mileageOut}
                 onChange={(e) => setMileageOut(Number(e.target.value))}
                 required
                 className="w-full text-sm p-2 rounded-lg border border-[#DCE2E6] bg-white text-[#24313A]"
@@ -226,7 +227,7 @@ export const AssignVehicleModal: React.FC<AssignVehicleModalProps> = ({
             </label>
             <input
               type="text"
-              value={reason}
+              aria-label="Assignment reason" value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="e.g. VIP client escort, hotel concierge visits..."
               required

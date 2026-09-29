@@ -16,7 +16,7 @@ const customerFields: Field[] = [
   {key:'licenceCountry',label:'Licence country'}, {key:'idOrPassport',label:'ID or passport'}, {key:'notes',label:'Notes'},
 ];
 
-export function RecordEditor({resource,record,onClose,onSaved}:{resource:'owners'|'customers';record?:object;onClose:()=>void;onSaved:()=>Promise<void>}) {
+export function RecordEditor({resource,record,onClose,onSaved,onCreated}:{resource:'owners'|'customers';record?:object;onClose:()=>void;onSaved:()=>Promise<void>;onCreated?:(record:{id:string})=>void}) {
   const initial = (record || {}) as Record<string,unknown>;
   const [values,setValues] = useState<Record<string,unknown>>({...initial, ...(resource==='owners'&&!record?{ownerType:'Company',revenueSplitPercentage:0}:{})});
   const [error,setError]=useState(''); const [saving,setSaving]=useState(false);
@@ -27,7 +27,7 @@ export function RecordEditor({resource,record,onClose,onSaved}:{resource:'owners
     const payload=Object.fromEntries(fields.filter(f=>values[f.key]!==undefined).map(f=>[f.key,f.type==='number'?Number(values[f.key]):values[f.key]]));
     try {
       if(initial.id) await update(resource,String(initial.id),{...payload,version:initial.version});
-      else await create(resource,payload);
+      else { const saved = await create<{id:string}>(resource,payload); onCreated?.(saved); }
       await onSaved();onClose();
     } catch(e) {setError(e instanceof Error?e.message:'Unable to save.');}
     finally {setSaving(false);}

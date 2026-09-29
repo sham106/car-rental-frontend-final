@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   UserCheck,
   Plus,
@@ -39,7 +40,9 @@ interface AssigneeSummary {
 export const AssignmentsView: React.FC = () => {
   const { assignments, vehicles, endAssignment, refreshAll } = useAdminData();
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+  useEffect(() => { setSearchQuery(searchParams.get('q') || ''); }, [searchParams]);
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'returned'>('all');
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
 
@@ -50,7 +53,7 @@ export const AssignmentsView: React.FC = () => {
   // End Assignment Dialog
   const [endingAssignment, setEndingAssignment] = useState<Assignment | null>(null);
   const [returnMileage, setReturnMileage] = useState<number>(0);
-  const [returnNotes, setReturnNotes] = useState('Vehicle returned in good operational condition.');
+  const [returnNotes, setReturnNotes] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -138,7 +141,8 @@ export const AssignmentsView: React.FC = () => {
 
   const handleOpenEndModal = (a: Assignment) => {
     setEndingAssignment(a);
-    setReturnMileage(a.mileageOut + 150);
+    setReturnMileage(Math.max(a.mileageOut, vehicles.find(v => v.id === a.vehicleId)?.mileage ?? 0));
+    setReturnNotes('');
     setError('');
   };
 

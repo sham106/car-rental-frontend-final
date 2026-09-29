@@ -1,6 +1,7 @@
+import { useSearchParams } from 'react-router-dom';
 import { NewBookingModal } from '../../components/admin/NewBookingModal';
 import { api } from '../../services/api';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Calendar,
   Search,
@@ -48,7 +49,9 @@ export const BookingsManagementView: React.FC = () => {
   const [newBookingOpen, setNewBookingOpen] = useState(false);
   const [paymentError, setPaymentError] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+  useEffect(() => { setSearchQuery(searchParams.get('q') || ''); }, [searchParams]);
 
   // Modals
   const [checkoutBooking, setCheckoutBooking] = useState<AdminBooking | null>(null);

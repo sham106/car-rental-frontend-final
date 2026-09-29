@@ -13,12 +13,13 @@ import {
   AlertCircle,
   ExternalLink,
 } from 'lucide-react';
-import { AdminVehicle } from '../../types/admin';
+import { AdminVehicle, DocumentType, ComplianceRecord } from '../../types/admin';
 import { useAdminData } from '../../context/AdminDataContext';
 import { StatusBadge } from '../../components/admin/StatusBadge';
 import { UploadDocumentModal } from '../../components/admin/UploadDocumentModal';
 import { RecordMaintenanceModal } from '../../components/admin/RecordMaintenanceModal';
 import { AssignVehicleModal } from '../../components/admin/AssignVehicleModal';
+import { VehicleSetupChecklist } from '../../components/admin/VehicleSetupChecklist';
 import { ADMIN_THEME } from '../../constants/adminTheme';
 
 interface VehicleProfileModalProps {
@@ -42,6 +43,9 @@ export const VehicleProfileModal: React.FC<VehicleProfileModalProps> = ({
   >('overview');
 
   const [action, setAction] = useState<'document' | 'maintenance' | 'assignment' | null>(null);
+  const [uploadType, setUploadType] = useState<DocumentType>('Insurance Certificate');
+  const [renewalRecord, setRenewalRecord] = useState<ComplianceRecord | undefined>();
+  const openUpload = (type: DocumentType = 'Insurance Certificate', record?: ComplianceRecord) => { setUploadType(type); setRenewalRecord(record); setAction('document'); };
   useEffect(() => { setActiveTab('overview'); setAction(null); }, [vehicle?.id, isOpen]);
   if (!isOpen || !vehicle) return null;
   vehicle = vehicles.find(v => v.id === vehicle.id) || vehicle;
@@ -72,31 +76,32 @@ export const VehicleProfileModal: React.FC<VehicleProfileModalProps> = ({
         style={{ borderColor: ADMIN_THEME.border }}
       >
         {/* Modal Top Header */}
-        <div className="px-6 py-4 border-b border-[#DCE2E6] bg-[#F4F6F7] flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-lg bg-[#17324D] text-white">
+        <div className="px-4 sm:px-6 py-4 border-b border-[#DCE2E6] bg-[#F4F6F7] flex items-start sm:items-center gap-2 justify-between flex-shrink-0">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="hidden sm:block p-2.5 rounded-lg bg-[#17324D] text-white">
               <Car className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold text-[#24313A]">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-base sm:text-lg font-bold text-[#24313A]">
                   {vehicle.brand} {vehicle.model} ({vehicle.year})
                 </h2>
                 <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-white border border-[#DCE2E6] text-[#17324D]">
                   {vehicle.registrationNumber}
                 </span>
               </div>
-              <p className="text-xs text-[#65727B] mt-0.5">
+              <p className="text-xs text-[#65727B] mt-0.5 break-all">
                 VIN: <span className="font-mono">{vehicle.vin}</span> Â· Owner: {vehicle.ownerName}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 flex-col-reverse sm:flex-row items-end sm:items-center gap-2">
             <StatusBadge status={vehicle.operationalStatus} size="md" />
             <button
               type="button"
               onClick={onClose}
+              aria-label="Close vehicle profile"
               className="text-[#65727B] hover:text-[#24313A] p-1.5 rounded-lg transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
@@ -189,13 +194,16 @@ export const VehicleProfileModal: React.FC<VehicleProfileModalProps> = ({
         {/* Scrollable Content */}
         <div className="p-6 overflow-y-auto flex-1 text-xs space-y-6">
           <div className="flex flex-wrap gap-2">
-            <button className="rounded border px-3 py-2" onClick={() => setAction('document')}>Upload / Renew Document</button>
+            <button className="rounded border px-3 py-2" onClick={() => openUpload()}>Upload / Renew Document</button>
             <button className="rounded border px-3 py-2" onClick={() => setAction('maintenance')}>Record Service</button>
             <button className="rounded border px-3 py-2" onClick={() => setAction('assignment')}>Assign Vehicle</button>
           </div>
           {/* TAB 1: OVERVIEW */}
           {activeTab === 'overview' && (
             <div className="space-y-6">
+              <VehicleSetupChecklist vehicle={vehicle} compliance={compliance} maintenance={maintenance}
+                onEdit={onOpenEditModal ? () => { onClose(); onOpenEditModal(vehicle); } : undefined}
+                onUpload={openUpload} onService={() => setAction('maintenance')} onAssign={() => setAction('assignment')} onClose={onClose} />
               {/* Top Banner: Photo & Vital Stats */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div className="md:col-span-1 rounded-xl overflow-hidden border border-[#DCE2E6] bg-gray-100 h-48">
@@ -213,7 +221,7 @@ export const VehicleProfileModal: React.FC<VehicleProfileModalProps> = ({
                       {vehicle.mileage.toLocaleString()} km
                     </span>
                     <span className="text-[10px] text-[#65727B]">
-                      Next service: {vehicle.nextServiceMileage ? `${vehicle.nextServiceMileage.toLocaleString()} km` : 'Due soon'}
+                      Next service: {vehicle.nextServiceMileage ? `${vehicle.nextServiceMileage.toLocaleString()} km` : 'Not recorded'}
                     </span>
                   </div>
 
@@ -270,7 +278,7 @@ export const VehicleProfileModal: React.FC<VehicleProfileModalProps> = ({
                     ['Date Out', currentAssignment?.startDate || currentBooking?.checkedOutAt || 'Not currently out'],
                     ['Expected Date In', currentAssignment?.expectedReturnDate || currentBooking?.returnDate || 'Not applicable'],
                     ['Date of Last Service', lastService?.date || 'Not recorded'],
-                    ['Mileage Last Service', lastService ? `${lastService.mileage.toLocaleString()} km` : 'Not recorded'],
+                    ['Mileage Last Service / Service Mileage', lastService ? `${lastService.mileage.toLocaleString()} km` : 'Not recorded'],
                     ['Mileage Next Service', vehicle.nextServiceMileage == null ? 'Not recorded' : `${vehicle.nextServiceMileage.toLocaleString()} km`],
                     ['Maintenance Details', lastService?.description || 'Not recorded'],
                   ].map(([label, value]) => <div key={label}><dt className="text-[#65727B]">{label}</dt><dd className="font-semibold whitespace-pre-wrap break-words">{value}</dd></div>)}
@@ -380,6 +388,7 @@ export const VehicleProfileModal: React.FC<VehicleProfileModalProps> = ({
           {/* TAB 2: RENTALS */}
           {activeTab === 'rentals' && (
             <div className="space-y-4">
+              <p className="text-[#65727B]">Rental dates are planned. Actual Date Out and Date In are captured by check-out and check-in, shown below each booking.</p>
               <h4 className="font-bold text-xs uppercase tracking-wider text-[#24313A]">
                 Customer Booking History ({vehicleBookings.length})
               </h4>
@@ -454,9 +463,10 @@ export const VehicleProfileModal: React.FC<VehicleProfileModalProps> = ({
           {/* TAB 4: COMPLIANCE & DOCUMENTS */}
           {activeTab === 'compliance' && (
             <div className="space-y-6">
+              <p>The Overview checklist shows the latest certifications. Previous certificates remain here for reference.</p>
               <div>
                 <h4 className="font-bold text-xs uppercase tracking-wider text-[#24313A] mb-2">
-                  Legal Compliance Status
+                  Certification & Renewal History
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {vehicleCompliance.map((c) => (
@@ -468,7 +478,7 @@ export const VehicleProfileModal: React.FC<VehicleProfileModalProps> = ({
                         </span>
                       </div>
                       <div className="text-[11px] text-[#65727B] mt-1">Company / Authority: {c.company || c.provider || 'Not recorded'}</div>
-                      <div className="text-[11px] text-[#65727B]">Issued: {c.issueDate} · Expires: {c.expiryDate}</div>
+                      <div className="text-[11px] text-[#65727B]">Issued: {c.issueDate} Â· Expires: {c.expiryDate}</div>
                       <div className="text-[11px]">Policy / Certificate: {c.policyNumber || 'Not recorded'}</div>
                       {c.complianceType === 'Insurance' && <><div>Broker: {c.broker || 'Not recorded'}</div><div>Insurance Premium: {c.premium == null ? 'Not recorded' : `Rs ${c.premium.toLocaleString()}`}</div></>}
                       {c.documentUrl && <a className="text-[#35658A] underline" href={c.documentUrl} target="_blank" rel="noreferrer">View Certificate</a>}
@@ -491,7 +501,7 @@ export const VehicleProfileModal: React.FC<VehicleProfileModalProps> = ({
                       <div key={d.id} className="p-3 bg-white rounded-lg border border-[#DCE2E6] flex items-center justify-between">
                         <div>
                           <div className="font-semibold text-[#24313A]">{d.title}</div>
-                          <div className="text-[11px] text-[#65727B]">{d.documentType} ({d.fileSize})<div>Issued: {d.issueDate || 'Not recorded'} · Expires: {d.expiryDate || 'Not applicable'}</div></div>
+                          <div className="text-[11px] text-[#65727B]">{d.documentType} ({d.fileSize})<div>Issued: {d.issueDate || 'Not recorded'} Â· Expires: {d.expiryDate || 'Not applicable'}</div></div>
                         </div>
                         <a
                           href={d.fileUrl}
@@ -574,9 +584,9 @@ export const VehicleProfileModal: React.FC<VehicleProfileModalProps> = ({
           )}
         </div>
       </div>
-      {action === 'document' && <UploadDocumentModal vehicle={vehicle} isOpen onClose={() => setAction(null)} onSuccess={refreshAll} />}
-      {action === 'maintenance' && <RecordMaintenanceModal vehicle={vehicle} isOpen onClose={() => setAction(null)} onSuccess={refreshAll} />}
-      {action === 'assignment' && <AssignVehicleModal vehicle={vehicle} isOpen onClose={() => setAction(null)} onSuccess={refreshAll} />}
+      {action === 'document' && <UploadDocumentModal vehicle={vehicle} initialDocumentType={uploadType} renewalRecord={renewalRecord} isOpen onClose={() => setAction(null)} onSuccess={async () => { await refreshAll(); setActiveTab('compliance'); }} />}
+      {action === 'maintenance' && <RecordMaintenanceModal vehicle={vehicle} isOpen onClose={() => setAction(null)} onSuccess={async () => { await refreshAll(); setActiveTab('maintenance'); }} />}
+      {action === 'assignment' && <AssignVehicleModal vehicle={vehicle} isOpen onClose={() => setAction(null)} onSuccess={async () => { await refreshAll(); setActiveTab('assignments'); }} />}
     </div>
   );
 };

@@ -1,3 +1,4 @@
+import { ComplianceRecord } from '../../types/admin';
 import React, { useState } from 'react';
 import { ShieldAlert, ShieldCheck, Plus, Search, AlertTriangle, Clock, Calendar, CheckCircle2 } from 'lucide-react';
 import { useAdminData } from '../../context/AdminDataContext';
@@ -10,6 +11,8 @@ export const ComplianceView: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [tabFilter, setTabFilter] = useState<'all' | 'expired' | 'next30' | 'valid'>('all');
+
+  const [renewalRecord, setRenewalRecord] = useState<ComplianceRecord | undefined>();
 
   const now = new Date().getTime();
 
@@ -49,7 +52,7 @@ export const ComplianceView: React.FC = () => {
         </div>
         <button
           type="button"
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => { setRenewalRecord(undefined); setIsModalOpen(true); }}
           className="px-4 py-2 text-xs font-semibold text-white bg-[#17324D] hover:bg-[#1F4366] rounded-lg shadow-2xs transition-colors flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
@@ -204,7 +207,7 @@ export const ComplianceView: React.FC = () => {
 
                       {/* Provider */}
                       <td className="py-3 px-3">
-                        <div className="text-[#24313A] font-medium">{c.provider}</div>
+                        <div className="text-[#24313A] font-medium">{c.company || c.provider || 'Not recorded'}<div className="text-[#65727B]">{c.broker ? `Broker: ${c.broker}` : ''}</div></div>
                       </td>
 
                       {/* Policy / Cert # */}
@@ -226,12 +229,12 @@ export const ComplianceView: React.FC = () => {
 
                       {/* Premium */}
                       <td className="py-3 px-3">
-                        {c.premium ? (
+                        {c.premium != null ? (
                           <div className="font-semibold text-[#24313A]">
                             Rs {c.premium.toLocaleString()}
                           </div>
                         ) : (
-                          <span className="text-[#95A2AA]">Standard Fee</span>
+                          <span className="text-[#95A2AA]">Not recorded</span>
                         )}
                       </td>
 
@@ -242,9 +245,10 @@ export const ComplianceView: React.FC = () => {
 
                       {/* Action */}
                       <td className="py-3 px-4 text-right">
+                        {c.documentUrl && <a href={c.documentUrl} target="_blank" rel="noreferrer" className="mr-3 text-[#35658A] underline">View file</a>}
                         <button
                           type="button"
-                          onClick={() => setIsModalOpen(true)}
+                          onClick={() => { setRenewalRecord(c); setIsModalOpen(true); }}
                           className="px-2.5 py-1 text-xs font-semibold text-[#35658A] hover:text-[#17324D] bg-[#F1F6FA] hover:bg-[#EAEFF2] rounded-md transition-colors cursor-pointer"
                         >
                           Renew / File
@@ -260,7 +264,9 @@ export const ComplianceView: React.FC = () => {
       </div>
 
       <UploadDocumentModal
-        vehicle={null}
+        vehicle={vehicles.find(v => v.id === renewalRecord?.vehicleId) || null}
+        renewalRecord={renewalRecord}
+        initialDocumentType={renewalRecord?.complianceType === 'Insurance' ? 'Insurance Certificate' : renewalRecord?.complianceType}
         vehiclesList={vehicles}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
