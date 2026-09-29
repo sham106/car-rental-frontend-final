@@ -34,12 +34,17 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
 }) => {
   const [selectedVehicleId, setSelectedVehicleId] = useState(vehicle?.id || '');
   const [documentType, setDocumentType] = useState<DocumentType>('Insurance Certificate');
-  const [title, setTitle] = useState('Certified Vehicle Policy Document');
+  const [title, setTitle] = useState('');
   const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
   const [expiryDate, setExpiryDate] = useState(
     new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   );
-  const [notes, setNotes] = useState('Official electronic copy filed on record.');
+  const [notes, setNotes] = useState('');
+  const [company, setCompany] = useState('');
+  const [broker, setBroker] = useState('');
+  const [policyNumber, setPolicyNumber] = useState('');
+  const [premium, setPremium] = useState('');
+  const isCompliance = ['Insurance Certificate', 'Fitness Certificate', 'MVL', 'Licence'].includes(documentType);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -60,6 +65,8 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
       setError('Please select a vehicle.');
       return;
     }
+    if (isCompliance && (!issueDate || !expiryDate)) { setError('Enter the issue and expiry dates for this certification.'); return; }
+    if (issueDate && expiryDate && expiryDate < issueDate) { setError('Expiry must be on or after issue date.'); return; }
     if (!selectedFile) { setError('Select a PDF or image to upload.'); return; }
     if (!title.trim()) {
       setError('Please provide a document title.');
@@ -79,6 +86,7 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
         issueDate,
         expiryDate,
         fileId: uploaded.id,
+        ...(isCompliance ? { compliance: { company: company.trim(), broker: documentType === 'Insurance Certificate' ? broker.trim() : '', policyNumber: policyNumber.trim(), premium: documentType === 'Insurance Certificate' ? Number(premium) : 0 } } : {}),
         notes: notes.trim(),
       });
       await onSuccess();
@@ -93,7 +101,7 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-150">
       <div
-        className="w-full max-w-lg bg-white rounded-xl shadow-2xl border overflow-hidden animate-in zoom-in-95 duration-150"
+        className="w-full max-w-lg max-h-[92vh] overflow-y-auto bg-white rounded-xl shadow-2xl border overflow-hidden animate-in zoom-in-95 duration-150"
         style={{ borderColor: ADMIN_THEME.border }}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#DCE2E6] bg-[#F4F6F7]">
@@ -182,6 +190,7 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
               </label>
               <input
                 type="date"
+                required={isCompliance}
                 value={issueDate}
                 onChange={(e) => setIssueDate(e.target.value)}
                 className="w-full text-sm p-2 rounded-lg border border-[#DCE2E6] bg-white text-[#24313A]"
@@ -193,6 +202,7 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
               </label>
               <input
                 type="date"
+                required={isCompliance}
                 value={expiryDate}
                 onChange={(e) => setExpiryDate(e.target.value)}
                 className="w-full text-sm p-2 rounded-lg border border-[#DCE2E6] bg-white text-[#24313A]"
@@ -200,6 +210,18 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
             </div>
           </div>
 
+          {isCompliance && <fieldset className="space-y-3 rounded-lg border border-[#DCE2E6] p-3">
+            <legend className="font-semibold text-sm">Certification details</legend>
+            <p className="text-xs text-[#65727B]">This upload also records the certification and its expiry in Compliance.</p>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="text-xs">{documentType === 'Insurance Certificate' ? 'Insurance Company' : 'Issuing Authority'}<input className="w-full border rounded p-2 mt-1" value={company} onChange={e => setCompany(e.target.value)} /></label>
+              <label className="text-xs">{documentType === 'Insurance Certificate' ? 'Policy Number' : 'Certificate Number'}<input className="w-full border rounded p-2 mt-1" value={policyNumber} onChange={e => setPolicyNumber(e.target.value)} /></label>
+              {documentType === 'Insurance Certificate' && <>
+                <label className="text-xs">Broker<input className="w-full border rounded p-2 mt-1" value={broker} onChange={e => setBroker(e.target.value)} /></label>
+                <label className="text-xs">Insurance Premium (Rs)<input type="number" min="0" step="0.01" className="w-full border rounded p-2 mt-1" value={premium} onChange={e => setPremium(e.target.value)} /></label>
+              </>}
+            </div>
+          </fieldset>}
           {/* File Upload */}
           <div>
             <label className="block text-xs font-semibold text-[#24313A] uppercase tracking-wider mb-1">

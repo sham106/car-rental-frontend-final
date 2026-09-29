@@ -28,7 +28,7 @@ export const ComplianceView: React.FC = () => {
         c.vehicleReg.toLowerCase().includes(q) ||
         c.vehicleName.toLowerCase().includes(q) ||
         c.complianceType.toLowerCase().includes(q) ||
-        c.provider.toLowerCase().includes(q) ||
+        (c.company || c.provider || '').toLowerCase().includes(q) ||
         c.policyNumber?.toLowerCase().includes(q)
       );
     }

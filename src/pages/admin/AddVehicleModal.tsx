@@ -10,7 +10,7 @@ interface AddVehicleModalProps {
   vehicleToEdit?: AdminVehicle | null;
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => Promise<void>;
+  onSuccess: (vehicle: AdminVehicle) => Promise<void>;
 }
 
 export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
@@ -162,8 +162,9 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
 
       const finalPhotos = photos;
 
+      let savedVehicle: AdminVehicle;
       if (vehicleToEdit) {
-        await adminVehicleService.updateVehicle(vehicleToEdit.id, {
+        savedVehicle = await adminVehicleService.updateVehicle(vehicleToEdit.id, {
           version: vehicleToEdit.version,
           brand: brand.trim(),
           model: model.trim(),
@@ -195,7 +196,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
         });
       } else {
         const slug = `${brand.toLowerCase()}-${model.toLowerCase().replace(/\s+/g, '-')}-${Date.now().toString().slice(-4)}`;
-        await adminVehicleService.createVehicle({
+        savedVehicle = await adminVehicleService.createVehicle({
           slug,
           brand: brand.trim(),
           model: model.trim(),
@@ -228,7 +229,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
         });
       }
 
-      await onSuccess();
+      await onSuccess(savedVehicle);
       onClose();
     } catch (err) {
       setError((err as Error).message || 'Failed to save vehicle');

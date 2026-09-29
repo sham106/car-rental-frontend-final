@@ -151,13 +151,14 @@ const AdminContent: React.FC = () => {
 
       {/* Global Add / Edit Vehicle Modal */}
       <AddVehicleModal
+        key={`${vehicleToEdit?.id || 'new'}-${isAddVehicleOpen}`}
         vehicleToEdit={vehicleToEdit}
         isOpen={isAddVehicleOpen}
         onClose={() => {
           setIsAddVehicleOpen(false);
           setVehicleToEdit(null);
         }}
-        onSuccess={refreshAll}
+        onSuccess={async (savedVehicle) => { await refreshAll(); setProfileVehicle(savedVehicle); }}
       />
 
       {/* 360° Profile Inspector Modal */}

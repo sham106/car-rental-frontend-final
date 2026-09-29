@@ -20,15 +20,15 @@ export const AssignVehicleModal: React.FC<AssignVehicleModalProps> = ({
   onSuccess,
 }) => {
   const [selectedVehicleId, setSelectedVehicleId] = useState(vehicle?.id || '');
-  const [assignedTo, setAssignedTo] = useState('Airport Handover Operations Team');
+  const [assignedTo, setAssignedTo] = useState('');
   const [assignmentType, setAssignmentType] = useState<AdminAssignmentType>('Staff');
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [expectedReturnDate, setExpectedReturnDate] = useState(
     new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   );
-  const [mileageOut, setMileageOut] = useState<number>(vehicle?.mileage || 20000);
-  const [reason, setReason] = useState('Staff airport shuttle and client vehicle relocation duties');
-  const [notes, setNotes] = useState('Fuel card #2 issued. Keep logbook updated.');
+  const [mileageOut, setMileageOut] = useState<number>(vehicle?.mileage ?? 0);
+  const [reason, setReason] = useState('');
+  const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 

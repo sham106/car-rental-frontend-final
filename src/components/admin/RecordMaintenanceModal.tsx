@@ -34,18 +34,18 @@ export const RecordMaintenanceModal: React.FC<RecordMaintenanceModalProps> = ({
   const [selectedVehicleId, setSelectedVehicleId] = useState(vehicle?.id || '');
   const [serviceType, setServiceType] = useState<MaintenanceServiceType>('Routine Service');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [mileage, setMileage] = useState<number>(vehicle?.mileage || 20000);
-  const [garage, setGarage] = useState('Toyota Mauritius Service Centre, Grand Baie');
-  const [description, setDescription] = useState('Periodic 20,000 km scheduled maintenance, synthetic oil & filter change.');
-  const [partsReplaced, setPartsReplaced] = useState('Oil filter, 0W-20 Full Synthetic (4.5L), Washer');
-  const [labourCost, setLabourCost] = useState<number>(1800);
-  const [partsCost, setPartsCost] = useState<number>(3200);
-  const [nextServiceMileage, setNextServiceMileage] = useState<number>((vehicle?.mileage || 20000) + 10000);
+  const [mileage, setMileage] = useState<number>(vehicle?.mileage ?? 0);
+  const [garage, setGarage] = useState('');
+  const [description, setDescription] = useState('');
+  const [partsReplaced, setPartsReplaced] = useState('');
+  const [labourCost, setLabourCost] = useState<number>(0);
+  const [partsCost, setPartsCost] = useState<number>(0);
+  const [nextServiceMileage, setNextServiceMileage] = useState<number>((vehicle?.mileage ?? 0) + 10000);
   const [nextServiceDate, setNextServiceDate] = useState(
     new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   );
-  const [invoiceNumber, setInvoiceNumber] = useState(`INV-${Date.now().toString().slice(-5)}`);
-  const [notes, setNotes] = useState('Battery and alternator health test passed.');
+  const [invoiceNumber, setInvoiceNumber] = useState('');
+  const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
