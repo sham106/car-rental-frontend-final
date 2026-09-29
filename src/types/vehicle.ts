@@ -26,7 +26,7 @@ export interface Vehicle {
   slug: string;
   brand: string;
   model: string;
-  year?: number | null;
+  year: number;
   color: string;
   category: string; // references VehicleCategory.slug
   description: string;

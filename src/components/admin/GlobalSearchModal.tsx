@@ -149,7 +149,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ onNavigate
                             {v.registrationNumber}
                           </span>
                           <span className="text-xs text-[#65727B]">
-                            {v.brand} {v.model} {v.year ? `(${v.year})` : ''}
+                            {v.brand} {v.model} ({v.year})
                           </span>
                           <span className="text-[11px] text-[#95A2AA]">VIN: {v.vin}</span>
                         </div>

@@ -24,7 +24,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
   // Form Fields
   const [brand, setBrand] = useState('');
   const [model, setModel] = useState('');
-  const [year, setYear] = useState<number | ''>('');
+  const [year, setYear] = useState<number>(new Date().getFullYear());
   const [color, setColor] = useState('');
   const [registrationNumber, setRegistrationNumber] = useState('');
   const [vin, setVin] = useState('');
@@ -73,7 +73,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
     if (vehicleToEdit) {
       setBrand(vehicleToEdit.brand);
       setModel(vehicleToEdit.model);
-      setYear(vehicleToEdit.year ?? '');
+      setYear(vehicleToEdit.year);
       setColor(vehicleToEdit.color);
       setRegistrationNumber(vehicleToEdit.registrationNumber);
       setVin(vehicleToEdit.vin);
@@ -168,7 +168,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
           version: vehicleToEdit.version,
           brand: brand.trim(),
           model: model.trim(),
-          year: year === '' ? null : Number(year),
+          year: Number(year),
           color: color.trim(),
           registrationNumber: registrationNumber.trim(),
           vin: vin.trim(),
@@ -200,6 +200,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
           slug,
           brand: brand.trim(),
           model: model.trim(),
+          year: Number(year),
           color: color.trim(),
           registrationNumber: registrationNumber.trim(),
           vin: vin.trim(),
@@ -216,6 +217,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
           ownerName,
           purchaseValue: Number(purchaseValue),
           currentValue: Number(currentValue),
+          purchaseDate,
           mileage: Number(mileage),
           nextServiceMileage: Number(nextServiceMileage),
           operationalStatus,
@@ -302,7 +304,6 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                 />
               </div>
 
-              {vehicleToEdit && (
               <div>
                 <label className="block font-semibold text-[#24313A] mb-1">
                   Year of Manufacture
@@ -310,13 +311,11 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                 <input
                   type="number"
                   value={year}
-                  min={1950}
-                  max={2100}
-                  onChange={(e) => setYear(e.target.value === '' ? '' : Number(e.target.value))}
+                  onChange={(e) => setYear(Number(e.target.value))}
+                  required
                   className="w-full p-2 rounded-lg border border-[#DCE2E6] bg-white text-xs text-[#24313A]"
                 />
               </div>
-              )}
 
               <div>
                 <label className="block font-semibold text-[#24313A] mb-1">
@@ -474,7 +473,6 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                 />
               </div>
 
-              {vehicleToEdit && (
               <div>
                 <label className="block font-semibold text-[#24313A] mb-1">Purchase Date</label>
                 <input
@@ -484,7 +482,6 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                   className="w-full p-2 rounded-lg border border-[#DCE2E6] bg-white text-xs text-[#24313A]"
                 />
               </div>
-              )}
 
               <div>
                 <label className="block font-semibold text-[#24313A] mb-1">

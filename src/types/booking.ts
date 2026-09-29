@@ -24,7 +24,7 @@ export interface VehicleSnapshot {
   slug: string;
   brand: string;
   model: string;
-  year?: number | null;
+  year: number;
   category: string;
   dailyRate: number;
   transmission: string;

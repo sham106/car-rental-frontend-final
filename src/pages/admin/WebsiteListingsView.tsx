@@ -237,7 +237,7 @@ export const WebsiteListingsView: React.FC<WebsiteListingsViewProps> = ({ onOpen
                         />
                         <div>
                           <div className="font-semibold text-[#24313A]">
-                            {v.brand} {v.model} {v.year ? `(${v.year})` : ''}
+                            {v.brand} {v.model} ({v.year})
                           </div>
                           <div className="font-mono text-[10px] text-[#65727B]">{v.registrationNumber}</div>
                         </div>

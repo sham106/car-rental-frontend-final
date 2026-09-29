@@ -63,7 +63,7 @@ export interface AdminVehicle {
   registrationNumber: string; // e.g. "5972 DZ 14"
   brand: string;
   model: string;
-  year?: number | null;
+  year: number;
   color: string;
   vin: string;
   engineNumber: string;
