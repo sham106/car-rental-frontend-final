@@ -80,7 +80,7 @@ export const VehicleProfileModal: React.FC<VehicleProfileModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-bold text-[#24313A]">
-                  {vehicle.brand} {vehicle.model} ({vehicle.year})
+                  {vehicle.brand} {vehicle.model} {vehicle.year ? `(${vehicle.year})` : ''}
                 </h2>
                 <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-white border border-[#DCE2E6] text-[#17324D]">
                   {vehicle.registrationNumber}
@@ -468,7 +468,7 @@ export const VehicleProfileModal: React.FC<VehicleProfileModalProps> = ({
                         </span>
                       </div>
                       <div className="text-[11px] text-[#65727B] mt-1">Company / Authority: {c.company || c.provider || 'Not recorded'}</div>
-                      <div className="text-[11px] text-[#65727B]">Issued: {c.issueDate} · Expires: {c.expiryDate}</div>
+                      <div className="text-[11px] text-[#65727B]">Issued: {c.issueDate} Â· Expires: {c.expiryDate}</div>
                       <div className="text-[11px]">Policy / Certificate: {c.policyNumber || 'Not recorded'}</div>
                       {c.complianceType === 'Insurance' && <><div>Broker: {c.broker || 'Not recorded'}</div><div>Insurance Premium: {c.premium == null ? 'Not recorded' : `Rs ${c.premium.toLocaleString()}`}</div></>}
                       {c.documentUrl && <a className="text-[#35658A] underline" href={c.documentUrl} target="_blank" rel="noreferrer">View Certificate</a>}
@@ -491,7 +491,7 @@ export const VehicleProfileModal: React.FC<VehicleProfileModalProps> = ({
                       <div key={d.id} className="p-3 bg-white rounded-lg border border-[#DCE2E6] flex items-center justify-between">
                         <div>
                           <div className="font-semibold text-[#24313A]">{d.title}</div>
-                          <div className="text-[11px] text-[#65727B]">{d.documentType} ({d.fileSize})<div>Issued: {d.issueDate || 'Not recorded'} · Expires: {d.expiryDate || 'Not applicable'}</div></div>
+                          <div className="text-[11px] text-[#65727B]">{d.documentType} ({d.fileSize})<div>Issued: {d.issueDate || 'Not recorded'} Â· Expires: {d.expiryDate || 'Not applicable'}</div></div>
                         </div>
                         <a
                           href={d.fileUrl}

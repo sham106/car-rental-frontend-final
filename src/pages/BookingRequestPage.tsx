@@ -325,7 +325,7 @@ export const BookingRequestPage: React.FC = () => {
                     {vehicle.category}
                   </span>
                   <h3 className="font-display font-bold text-base text-[#16324F]">
-                    {vehicle.brand} {vehicle.model} ({vehicle.year})
+                    {vehicle.brand} {vehicle.model} {vehicle.year ? `(${vehicle.year})` : ''}
                   </h3>
                   <p className="text-xs text-[#66747E]">
                     {vehicle.transmission} · {vehicle.fuelType} · {vehicle.seats} Seats · {vehicle.color}
@@ -694,7 +694,7 @@ export const BookingRequestPage: React.FC = () => {
                   <div className="flex justify-between items-baseline">
                     <span className="font-bold text-[#16324F]">Vehicle Selected:</span>
                     <span className="font-semibold text-[#2F6F6D]">
-                      {vehicle.brand} {vehicle.model} ({vehicle.year})
+                      {vehicle.brand} {vehicle.model} {vehicle.year ? `(${vehicle.year})` : ''}
                     </span>
                   </div>
                   <div className="flex justify-between items-baseline">

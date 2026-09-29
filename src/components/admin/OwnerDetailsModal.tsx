@@ -317,7 +317,7 @@ export const OwnerDetailsModal: React.FC<OwnerDetailsModalProps> = ({
                                 {vehicle.category}
                               </span>
                               <span className="text-[10px] text-[#65727B]">
-                                {vehicle.year} · {vehicle.transmission}
+                                {vehicle.year ? `${vehicle.year} · ` : ''} {vehicle.transmission}
                               </span>
                             </div>
 

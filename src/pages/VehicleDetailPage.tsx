@@ -141,7 +141,7 @@ export const VehicleDetailPage: React.FC = () => {
             {vehicle.category}
           </span>
           <span className="text-xs text-[#66747E] font-medium">
-            Model Year {vehicle.year}
+            {vehicle.year ? `Model Year ${vehicle.year}` : 'Model year not recorded'}
           </span>
           <span className="text-xs text-[#66747E]">·</span>
           <span className="text-xs text-[#66747E] font-medium">

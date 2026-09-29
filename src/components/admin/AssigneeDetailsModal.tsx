@@ -287,7 +287,7 @@ export const AssigneeDetailsModal: React.FC<AssigneeDetailsModalProps> = ({
 
                           {vehicle && (
                             <div className="text-[11px] text-[#65727B] mt-1.5">
-                              <span>{vehicle.year} · {vehicle.category} · {vehicle.transmission}</span>
+                              <span>{vehicle.year ? `${vehicle.year} · ` : ''} {vehicle.category} · {vehicle.transmission}</span>
                             </div>
                           )}
                         </div>
