@@ -67,6 +67,7 @@ export interface AdminVehicle {
   color: string;
   vin: string;
   engineNumber: string;
+  tyreSize?: string;
   category: AdminCategory | string;
   dailyRate: number; // in MUR Rs
   transmission: 'Automatic' | 'Manual';

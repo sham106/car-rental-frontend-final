@@ -1,4 +1,5 @@
 import { OperationalAlertCard } from '../../components/admin/OperationalActionCenter';
+import { ServiceJobs } from '../../components/admin/ServiceJobs';
 import React, { useState } from 'react';
 import { Wrench, Plus, Search, AlertCircle, Calendar, DollarSign, Filter } from 'lucide-react';
 import { useAdminData } from '../../context/AdminDataContext';
@@ -32,6 +33,7 @@ export const MaintenanceView: React.FC = () => {
 
   return (
     <div className="space-y-5">
+      <ServiceJobs />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

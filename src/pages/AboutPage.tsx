@@ -25,7 +25,7 @@ export const AboutPage: React.FC = () => {
           Built on Trust, Island Hospitality, and Automotive Confidence.
         </h1>
         <p className="text-base sm:text-lg text-[#66747E] leading-relaxed">
-          Founded in Mauritius, Oceane Car Rental was created to eliminate the friction, hidden fees, and uncertainty that often surround holiday car hire. We believe discovering this island should be effortless from the minute you step off your plane.
+          Founded in Mauritius, DailyCar was created to eliminate the friction, hidden fees, and uncertainty that often surround holiday car hire. We believe discovering this island should be effortless from the minute you step off your plane.
         </p>
       </section>
 

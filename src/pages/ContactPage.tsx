@@ -33,7 +33,7 @@ export const ContactPage: React.FC = () => {
   };
 
   const handleWhatsApp = () => {
-    const text = 'Hello Oceane Car Rental, I would like to make an inquiry about car rental in Mauritius.';
+    const text = 'Hello DailyCar, I would like to make an inquiry about car rental in Mauritius.';
     window.open(`https://wa.me/${BRAND.whatsappNumber}?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
   };
 

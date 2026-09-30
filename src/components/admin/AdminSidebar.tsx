@@ -109,7 +109,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             </div>
             <div className="leading-tight">
               <div className="font-bold text-sm text-[#F4F6F8] tracking-tight truncate">
-                Oceane Fleet
+                DailyCar
               </div>
               <div className="text-[10px] text-[#8C9BA5] uppercase tracking-wider font-medium">
                 Operations & Admin

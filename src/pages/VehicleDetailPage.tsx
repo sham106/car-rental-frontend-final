@@ -64,7 +64,7 @@ export const VehicleDetailPage: React.FC = () => {
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: `${vehicle?.brand} ${vehicle?.model} - Oceane Car Rental`,
+        title: `${vehicle?.brand} ${vehicle?.model} - DailyCar`,
         url: window.location.href,
       }).catch(() => {});
     } else {

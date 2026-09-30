@@ -16,7 +16,7 @@ export const WhatsAppFloat: React.FC<WhatsAppFloatProps> = ({ customVehicleName 
 
   const defaultMessage = customVehicleName
     ? `Hello, I am interested in the ${customVehicleName} from ${formattedPickup} to ${formattedReturn}. Could you confirm availability?`
-    : `Hello Oceane Car Rental, I would like to inquire about car hire availability in Mauritius from ${formattedPickup} to ${formattedReturn}.`;
+    : `Hello DailyCar, I would like to inquire about car hire availability in Mauritius from ${formattedPickup} to ${formattedReturn}.`;
 
   const [message, setMessage] = useState(defaultMessage);
 
@@ -42,7 +42,7 @@ export const WhatsAppFloat: React.FC<WhatsAppFloatProps> = ({ customVehicleName 
                 OC
               </div>
               <div>
-                <h4 className="font-semibold text-sm leading-tight">Oceane Concierge</h4>
+                <h4 className="font-semibold text-sm leading-tight">DailyCar Concierge</h4>
                 <span className="text-[11px] text-[#EAF0F3]/80 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   Typically replies in minutes

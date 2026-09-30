@@ -86,7 +86,7 @@ export const PriceBreakdownBox: React.FC<PriceBreakdownBoxProps> = ({ vehicle })
   };
 
   const handleWhatsAppInquiry = () => {
-    const text = `Hello Oceane Car Rental, I am inquiring about the ${vehicle.brand} ${vehicle.model} (${vehicle.year}) from ${pickupDate} to ${returnDate}. Could you confirm availability?`;
+    const text = `Hello DailyCar, I am inquiring about the ${vehicle.brand} ${vehicle.model} (${vehicle.year}) from ${pickupDate} to ${returnDate}. Could you confirm availability?`;
     const url = `https://wa.me/${BRAND.whatsappNumber}?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };

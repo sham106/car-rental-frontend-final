@@ -7,7 +7,7 @@ export const UsersRolesView: React.FC = () => {
   if (!user) return null;
   return <section className="space-y-5">
     <div><h1 className="text-2xl font-bold text-[#24313A]">Your administrator account</h1>
-      <p className="mt-1 text-sm text-[#65727B]">Your current authorized access to Oceane Fleet Operations.</p></div>
+      <p className="mt-1 text-sm text-[#65727B]">Your current authorized access to DailyCar Fleet Operations.</p></div>
     <div className="max-w-2xl rounded-xl border border-[#DCE2E6] bg-white p-6 space-y-5">
       <div className="flex items-center gap-3"><ShieldCheck className="w-6 h-6 text-[#2F6F6D]" /><span className="font-semibold">Active administrator</span></div>
       <dl className="grid sm:grid-cols-2 gap-5 text-sm">

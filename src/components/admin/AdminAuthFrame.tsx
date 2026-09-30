@@ -5,9 +5,9 @@ import { ArrowLeft, Compass, ShieldCheck } from 'lucide-react';
 export function AdminAuthFrame({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
   return <main className="min-h-screen bg-[#F4F6F7] text-[#24313A] flex flex-col">
     <header className="max-w-6xl w-full mx-auto px-6 py-7 flex items-center justify-between gap-4">
-      <Link to="/" className="flex items-center gap-3" aria-label="Oceane Car Rental home">
+      <Link to="/" className="flex items-center gap-3" aria-label="DailyCar home">
         <span className="bg-[#17324D] rounded-xl p-3 text-[#D97745]"><Compass className="w-6 h-6" /></span>
-        <span><strong className="block tracking-wider text-[#17324D]">OCEANE</strong><span className="text-xs text-[#65727B]">Car Rental Mauritius</span></span>
+        <span><strong className="block tracking-wider text-[#17324D]">DailyCar</strong><span className="text-xs text-[#65727B]">Car Rental Mauritius</span></span>
       </Link>
       <Link to="/" className="text-xs font-semibold flex items-center gap-2 text-[#35658A]"><ArrowLeft className="w-4 h-4" /><span>Back to website</span></Link>
     </header>
@@ -18,7 +18,7 @@ export function AdminAuthFrame({ title, description, children }: { title: string
             <h2 className="font-display text-4xl font-bold leading-tight">Every journey starts<br />with a ready fleet.</h2>
             <p className="text-sm leading-7 text-[#C2D1DC] mt-6 max-w-sm">Your workspace for vehicle management, rental coordination and daily operations.</p>
           </div>
-          <div className="border-t border-white/15 pt-6 flex gap-3 items-start"><ShieldCheck className="w-5 h-5 text-[#A7CBC9] shrink-0" /><p className="text-xs leading-6 text-[#C2D1DC]">Restricted to authorized Oceane administrators. Use the account provided by your team.</p></div>
+          <div className="border-t border-white/15 pt-6 flex gap-3 items-start"><ShieldCheck className="w-5 h-5 text-[#A7CBC9] shrink-0" /><p className="text-xs leading-6 text-[#C2D1DC]">Restricted to authorized DailyCar administrators. Use the account provided by your team.</p></div>
         </section>
         <section className="p-6 sm:p-10 lg:p-12 flex flex-col justify-center">
           <div className="inline-flex text-[#2F6F6D] text-xs font-bold uppercase tracking-wider mb-3">Administrator access</div>
@@ -28,7 +28,7 @@ export function AdminAuthFrame({ title, description, children }: { title: string
         </section>
       </div>
     </div>
-    <footer className="text-center px-4 py-6 text-xs text-[#65727B]">Oceane Car Rental · Mauritius</footer>
+    <footer className="text-center px-4 py-6 text-xs text-[#65727B]">DailyCar · Mauritius</footer>
   </main>;
 }
 

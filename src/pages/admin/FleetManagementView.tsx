@@ -220,7 +220,7 @@ export const FleetManagementView: React.FC<FleetManagementViewProps> = ({
             className="text-xs py-1.5 px-2.5 rounded-lg border border-[#DCE2E6] bg-white text-[#24313A] focus:outline-none focus:border-[#35658A]"
           >
             <option value="all">All Ownership</option>
-            <option value="internal">Internal (Oceane)</option>
+            <option value="internal">Internal</option>
             <option value="partner">Private Partner Owners</option>
           </select>
 

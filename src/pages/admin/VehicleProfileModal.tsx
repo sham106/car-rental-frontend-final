@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ServiceJobs } from '../../components/admin/ServiceJobs';
 import {
   X,
   Car,
@@ -196,6 +197,7 @@ export const VehicleProfileModal: React.FC<VehicleProfileModalProps> = ({
           <div className="flex flex-wrap gap-2">
             <button className="rounded border px-3 py-2" onClick={() => openUpload()}>Upload / Renew Document</button>
             <button className="rounded border px-3 py-2" onClick={() => setAction('maintenance')}>Record Service</button>
+            <button className="rounded border px-3 py-2" onClick={() => setActiveTab('maintenance')}>Service job cards</button>
             <button className="rounded border px-3 py-2" onClick={() => setAction('assignment')}>Assign Vehicle</button>
           </div>
           {/* TAB 1: OVERVIEW */}
@@ -274,6 +276,7 @@ export const VehicleProfileModal: React.FC<VehicleProfileModalProps> = ({
                 <dl className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {[
                     ['Engine Number', vehicle.engineNumber || 'Not recorded'],
+                    ['Tyre Size', vehicle.tyreSize || 'Not recorded'],
                     ['Assigned To', currentAssignment?.assignedTo || currentBooking?.customerName || 'Not currently assigned'],
                     ['Date Out', currentAssignment?.startDate || currentBooking?.checkedOutAt || 'Not currently out'],
                     ['Expected Date In', currentAssignment?.expectedReturnDate || currentBooking?.returnDate || 'Not applicable'],
@@ -426,6 +429,7 @@ export const VehicleProfileModal: React.FC<VehicleProfileModalProps> = ({
           {/* TAB 3: MAINTENANCE */}
           {activeTab === 'maintenance' && (
             <div className="space-y-4">
+              <ServiceJobs vehicle={vehicle} />
               <h4 className="font-bold text-xs uppercase tracking-wider text-[#24313A]">
                 Maintenance & Service Log ({vehicleMaintenance.length})
               </h4>

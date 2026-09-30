@@ -1,5 +1,5 @@
 export const BRAND = {
-  name: 'Oceane Car Rental',
+  name: 'DailyCar',
   tagline: 'Drive Mauritius Your Way',
   legalName: 'Oceane Mobility Ltd',
   registrationNumber: 'C22098412',

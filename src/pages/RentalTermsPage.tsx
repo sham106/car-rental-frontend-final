@@ -15,7 +15,7 @@ export const RentalTermsPage: React.FC = () => {
           Rental Terms & Conditions
         </h1>
         <p className="text-sm sm:text-base text-[#66747E] leading-relaxed">
-          At Oceane Car Rental, we believe in fair, clearly documented terms. Here is an explicit overview of driving rules, insurance excess, security deposits, and cancellation policies in Mauritius.
+          At DailyCar, we believe in fair, clearly documented terms. Here is an explicit overview of driving rules, insurance excess, security deposits, and cancellation policies in Mauritius.
         </p>
       </div>
 

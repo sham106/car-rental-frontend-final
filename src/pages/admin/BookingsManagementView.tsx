@@ -93,7 +93,7 @@ export const BookingsManagementView: React.FC = () => {
         <body>
           <div class="header">
             <div>
-              <div class="title">OCR Car Rental Mauritius</div>
+              <div class="title">DailyCar</div>
               <div class="subtitle">Vehicle Handover & Return Inspection Certificate · Dispute Protection Record</div>
             </div>
             <div style="text-align: right;">
@@ -151,7 +151,7 @@ export const BookingsManagementView: React.FC = () => {
             <div>
               <div class="sig-line"></div>
               <strong>Authorized Inspector Signature</strong><br/>
-              <span style="font-size: 10px; color: #65727B;">OCR Car Rental Operations Agent</span>
+              <span style="font-size: 10px; color: #65727B;">DailyCar Operations Agent</span>
             </div>
           </div>
         </body>

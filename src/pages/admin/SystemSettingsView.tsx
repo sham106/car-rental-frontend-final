@@ -20,7 +20,7 @@ export const SystemSettingsView: React.FC = () => {
   const { refreshAll } = useAdminData();
 
   // Settings local state with sensible operational defaults
-  const [companyName, setCompanyName] = useState('Oceane Car Rental Mauritius Ltd');
+  const [companyName, setCompanyName] = useState('DailyCar');
   const [brn, setBrn] = useState('C14092817');
   const [vatNumber, setVatNumber] = useState('VAT27192801');
   const [phone, setPhone] = useState('+230 5250 8899');

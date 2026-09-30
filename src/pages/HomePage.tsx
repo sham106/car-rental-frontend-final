@@ -235,8 +235,8 @@ export const HomePage: React.FC = () => {
       <section className="bg-[#EAF0F3] py-16 sm:py-20 border-y border-[#DFE6EC]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeader
-            categoryTitle="The Oceane Standard"
-            title="Why Rent With Oceane"
+            categoryTitle="The DailyCar Standard"
+            title="Why Rent With DailyCar"
             description="Clear expectations, reliable mechanics, and direct local support so your island holiday remains effortlessly smooth."
             align="center"
           />
@@ -297,7 +297,7 @@ export const HomePage: React.FC = () => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeader
           categoryTitle="Simple & Transparent"
-          title="How Rental Works With Oceane"
+          title="How Rental Works With DailyCar"
           description="From selecting your vehicle online to picking up your keys at the airport or your hotel villa."
           align="center"
         />
@@ -380,7 +380,7 @@ export const HomePage: React.FC = () => {
         <SectionHeader
           categoryTitle="Customer Experiences"
           title="Recent Traveler Reviews"
-          description="Honest feedback from international visitors who explored Mauritius with Oceane vehicles."
+          description="Honest feedback from international visitors who explored Mauritius with DailyCar vehicles."
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

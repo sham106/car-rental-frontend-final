@@ -32,6 +32,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
   const [registrationNumber, setRegistrationNumber] = useState('');
   const [vin, setVin] = useState('');
   const [engineNumber, setEngineNumber] = useState('');
+  const [tyreSize, setTyreSize] = useState('');
   const [category, setCategory] = useState<AdminCategory>('suv');
   const [seats, setSeats] = useState<number>(5);
   const [luggageCapacity, setLuggageCapacity] = useState<number>(3);
@@ -82,6 +83,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
       setRegistrationNumber(vehicleToEdit.registrationNumber);
       setVin(vehicleToEdit.vin);
       setEngineNumber(vehicleToEdit.engineNumber || '');
+      setTyreSize(vehicleToEdit.tyreSize || '');
       setCategory(vehicleToEdit.category as AdminCategory);
       setSeats(vehicleToEdit.seats);
       setLuggageCapacity(vehicleToEdit.luggageCapacity || 3);
@@ -179,6 +181,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
           registrationNumber: registrationNumber.trim(),
           vin: vin.trim(),
           engineNumber: engineNumber.trim(),
+          tyreSize: tyreSize.trim(),
           category,
           seats: Number(seats),
           luggageCapacity: Number(luggageCapacity),
@@ -212,6 +215,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
           registrationNumber: registrationNumber.trim(),
           vin: vin.trim(),
           engineNumber: engineNumber.trim(),
+          tyreSize: tyreSize.trim(),
           category,
           seats: Number(seats),
           luggageCapacity: Number(luggageCapacity),
@@ -370,6 +374,20 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                   placeholder="Engine block code"
                   className="w-full p-2 rounded-lg border border-[#DCE2E6] bg-white text-xs text-[#24313A] font-mono"
                 />
+              </div>
+
+              <div>
+                <label htmlFor="vehicle-tyre-size" className="block font-semibold text-[#24313A] mb-1">Tyre size (optional)</label>
+                <input
+                  id="vehicle-tyre-size"
+                  type="text"
+                  value={tyreSize}
+                  onChange={(e) => setTyreSize(e.target.value)}
+                  maxLength={160}
+                  placeholder="e.g. 205/55 R16"
+                  className="w-full p-2 rounded-lg border border-[#DCE2E6] bg-white text-xs text-[#24313A]"
+                />
+                <p className="mt-1 text-xs text-[#65727B]">If different, include both front and rear sizes.</p>
               </div>
 
               <div>

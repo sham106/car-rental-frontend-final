@@ -52,7 +52,7 @@ export const BookingConfirmationPage: React.FC = () => {
     if (!booking) return;
     const vehicleInfo = booking.vehicle || (booking as any).vehicleSummary;
     const vehicleName = vehicleInfo ? `${vehicleInfo.brand} ${vehicleInfo.model}` : 'the vehicle';
-    const msg = `Hello Oceane Car Rental, I have submitted booking request reference *${booking.reference}* for the ${vehicleName} (${booking.pickupDate} to ${booking.returnDate}).`;
+    const msg = `Hello DailyCar, I have submitted booking request reference *${booking.reference}* for the ${vehicleName} (${booking.pickupDate} to ${booking.returnDate}).`;
     window.open(`https://wa.me/${BRAND.whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
   };
 
@@ -133,7 +133,7 @@ export const BookingConfirmationPage: React.FC = () => {
             <span>Rental Completed & Returned</span>
           </div>
           <p className="text-[#546E7A] leading-relaxed pl-7">
-            This vehicle has been returned and verified in our fleet records. Thank you for choosing Oceane Car Rental!
+            This vehicle has been returned and verified in our fleet records. Thank you for choosing DailyCar!
           </p>
         </div>
       ) : booking.status === 'cancelled' || booking.status === 'rejected' ? (
@@ -166,7 +166,7 @@ export const BookingConfirmationPage: React.FC = () => {
         <div className="bg-[#16324F] text-white p-5 flex items-center justify-between">
           <div>
             <h3 className="font-display font-bold text-base">Booking Summary Voucher</h3>
-            <span className="text-xs text-[#EAF0F3]/80">Oceane Car Rental · Mauritius</span>
+            <span className="text-xs text-[#EAF0F3]/80">DailyCar · Mauritius</span>
           </div>
           <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-white ${
             booking.status === 'confirmed' ? 'bg-[#2A6E3B]' :

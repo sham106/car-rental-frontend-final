@@ -19,7 +19,7 @@ export const Footer: React.FC = () => {
               </div>
               <div className="flex flex-col">
                 <span className="font-display font-extrabold text-xl tracking-tight text-white leading-none">
-                  OCEANE
+                  DailyCar
                 </span>
                 <span className="text-[11px] font-medium tracking-widest text-[#EAF0F3]/80 uppercase mt-0.5">
                   Car Rental Mauritius

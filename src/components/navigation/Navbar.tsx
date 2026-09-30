@@ -57,7 +57,7 @@ export const Navbar: React.FC = () => {
             </div>
             <div className="flex flex-col">
               <span className="font-display font-extrabold text-xl tracking-tight text-[#16324F] leading-none">
-                OCEANE
+                DailyCar
               </span>
               <span className="text-[11px] font-medium tracking-widest text-[#2F6F6D] uppercase mt-0.5">
                 Car Rental Mauritius
