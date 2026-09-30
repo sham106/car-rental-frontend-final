@@ -3,12 +3,13 @@ import { BarChart3, Download, FileText, Calendar, Filter, DollarSign, TrendingUp
 import { useAdminData } from '../../context/AdminDataContext';
 import { adminReportService } from '../../services/admin/adminReportService';
 import { ADMIN_THEME } from '../../constants/adminTheme';
+import { VehicleOverviewReport } from '../../components/admin/VehicleOverviewReport';
 
 export const ReportsView: React.FC = () => {
   const { vehicles, bookings, maintenance, compliance, owners } = useAdminData();
   const [activeReport, setActiveReport] = useState<
-    'utilization' | 'revenue' | 'maintenance' | 'owners' | 'compliance'
-  >('utilization');
+    'overview' | 'utilization' | 'revenue' | 'maintenance' | 'owners' | 'compliance'
+  >('overview');
 
   // Computed data
   const totalFleet = vehicles.length;
@@ -41,24 +42,24 @@ export const ReportsView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[#24313A] tracking-tight">
-            Fleet Intelligence & Financial Reports
+            Vehicle & Fleet Reports
           </h1>
           <p className="text-sm text-[#65727B] mt-0.5">
-            Operational utilization metrics, vehicle revenue yield, estimated owner shares, and expense audits
+            Find a car’s compliance and service details, or review fleet operations and finances.
           </p>
         </div>
-        <button
+        {activeReport !== 'overview' && <button
           type="button"
           onClick={handleExportCSV}
           className="px-4 py-2 text-xs font-semibold text-white bg-[#17324D] hover:bg-[#1F4366] rounded-lg shadow-2xs transition-colors flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
         >
           <Download className="w-4 h-4" />
           <span>Export CSV Report</span>
-        </button>
+        </button>}
       </div>
 
       {/* KPI Highlights */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {activeReport !== 'overview' && <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="p-4 rounded-xl border bg-white shadow-2xs" style={{ borderColor: ADMIN_THEME.border }}>
           <div className="text-[11px] font-semibold text-[#65727B] uppercase tracking-wider">
             Current Fleet Utilization
@@ -90,8 +91,11 @@ export const ReportsView: React.FC = () => {
         </div>
       </div>
 
+      }
+
       {/* Report Selection Tabs */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-[#DCE2E6]">
+        <button type="button" onClick={() => setActiveReport('overview')} className={`whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium ${activeReport === 'overview' ? 'bg-[#17324D] text-white font-semibold' : 'text-[#65727B] hover:bg-white'}`}>Vehicle overview</button>
         <button
           type="button"
           onClick={() => setActiveReport('utilization')}
@@ -144,6 +148,7 @@ export const ReportsView: React.FC = () => {
         className="rounded-xl border bg-white overflow-hidden shadow-2xs"
         style={{ borderColor: ADMIN_THEME.border }}
       >
+        {activeReport === 'overview' && <VehicleOverviewReport />}
         {activeReport === 'utilization' && (
           <table className="w-full text-left border-collapse text-xs">
             <thead>
