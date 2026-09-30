@@ -6,13 +6,25 @@ import { alertPriority, notificationPath, sortAlerts } from '../../utils/operati
 import type { AdminNotification } from '../../types/admin';
 
 export function OperationalAlertCard({ alert }: { alert: AdminNotification }) {
+  const { vehicles } = useAdminData();
+  const vehicle = vehicles.find(item => item.id === alert.vehicleId);
+  const registration = vehicle?.registrationNumber || alert.vehicleReg;
+  const vehicleName = vehicle ? [vehicle.brand, vehicle.model].filter(Boolean).join(' ') : '';
   const badge = alertPriority[alert.priority] || alertPriority.upcoming;
   return <article className={`rounded-xl border p-4 ${badge.style}`}>
     <div className="flex flex-wrap justify-between gap-2 text-xs">
       <span className="font-bold uppercase tracking-wide">{badge.label}</span>
       {alert.read && <span>Seen · action still required</span>}
     </div>
-    <h3 className="mt-2 text-sm font-bold">{alert.title}</h3>
+    <div className="mt-3 rounded-lg bg-white/70 p-3">
+      <p className="text-xs font-semibold uppercase tracking-wide">Vehicle · Registration</p>
+      <p className="mt-1 text-lg font-bold break-words">{registration || 'Vehicle details unavailable'}</p>
+      {vehicleName && <p className="mt-1 text-sm font-semibold break-words">{vehicleName}</p>}
+      {vehicle && <Link to={`/admin/fleet?vehicleId=${encodeURIComponent(vehicle.id)}`} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold underline" aria-label={`View vehicle ${registration}`}>
+        View vehicle <ArrowRight className="h-3.5 w-3.5" />
+      </Link>}
+    </div>
+    <h3 className="mt-3 text-sm font-bold">{alert.title}</h3>
     <p className="mt-1 text-xs leading-relaxed break-words">{alert.description || alert.message}</p>
     <Link to={notificationPath(alert)} className="mt-3 inline-flex items-center gap-1 rounded-lg border border-current px-3 py-2 text-xs font-semibold bg-white/70">
       {alert.actionLabel || 'Review vehicle'} <ArrowRight className="h-3.5 w-3.5" />
