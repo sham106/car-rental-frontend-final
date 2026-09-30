@@ -19,6 +19,7 @@ import { AdminAuditView } from './AdminAuditView';
 import { SystemSettingsView } from './SystemSettingsView';
 import { AddVehicleModal } from './AddVehicleModal';
 import { VehicleProfileModal } from './VehicleProfileModal';
+import { RecordMaintenanceModal } from '../../components/admin/RecordMaintenanceModal';
 import { ChangeStatusModal } from '../../components/admin/ChangeStatusModal';
 import { AdminErrorBoundary } from '../../components/admin/AdminErrorBoundary';
 import { AdminVehicle } from '../../types/admin';
@@ -76,6 +77,7 @@ const AdminContent: React.FC = () => {
   const [isAddVehicleOpen, setIsAddVehicleOpen] = useState(false);
   const [vehicleToEdit, setVehicleToEdit] = useState<AdminVehicle | null>(null);
   const [profileVehicle, setProfileVehicle] = useState<AdminVehicle | null>(null);
+  const [serviceVehicle, setServiceVehicle] = useState<AdminVehicle | null>(null);
   const [statusVehicle, setStatusVehicle] = useState<AdminVehicle | null>(null);
 
   const { vehicles, refreshAll, changeVehicleStatus } = useAdminData();
@@ -86,8 +88,15 @@ const AdminContent: React.FC = () => {
     if (!id) return;
     const selected = vehicles.find(v => v.id === id);
     if (!selected) return;
-    setProfileVehicle(selected);
+    if (params.get('action') === 'record-service') {
+      setProfileVehicle(null);
+      setServiceVehicle(selected);
+    } else {
+      setServiceVehicle(null);
+      setProfileVehicle(selected);
+    }
     params.delete('vehicleId');
+    params.delete('action');
     navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
   }, [location.search, vehicles, navigate]);
 
@@ -182,6 +191,13 @@ const AdminContent: React.FC = () => {
       />
 
       {/* Direct Status Modal */}
+      {serviceVehicle && <RecordMaintenanceModal
+        vehicle={vehicles.find(v => v.id === serviceVehicle.id) || serviceVehicle}
+        isOpen
+        onClose={() => setServiceVehicle(null)}
+        onSuccess={refreshAll}
+      />}
+
       <ChangeStatusModal
         vehicle={statusVehicle}
         isOpen={Boolean(statusVehicle)}

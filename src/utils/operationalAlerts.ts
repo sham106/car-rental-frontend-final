@@ -18,6 +18,9 @@ export function sortAlerts(alerts: AdminNotification[]) {
 }
 
 export function notificationPath(notification: AdminNotification) {
+  if (notification.vehicleId && (notification.type === 'service_due' || notification.type === 'service_overdue')) {
+    return `/admin/fleet?${new URLSearchParams({ vehicleId: notification.vehicleId, action: 'record-service' })}`;
+  }
   const path = notification.linkTo || notification.link || '/admin';
   return path === '/admin' || path.startsWith('/admin/') ? path : '/admin';
 }

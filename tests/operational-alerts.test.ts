@@ -19,3 +19,13 @@ test('notification routing preserves car-specific admin links without allowing e
   assert.equal(notificationPath({...notification,linkTo:'https://other.example'}),'/admin');
   assert.equal(notificationPath({...notification,linkTo:'/admin-elsewhere'}),'/admin');
 });
+
+test('service alerts open the record-service form for the correct vehicle, including legacy alerts', () => {
+  for (const type of ['service_due', 'service_overdue'] as const) {
+    const path = notificationPath({ type, vehicleId: 'car & 2', linkTo: '/admin/fleet?vehicleId=old' } as AdminNotification);
+    const url = new URL(path, 'https://example.test');
+    assert.equal(url.pathname, '/admin/fleet');
+    assert.equal(url.searchParams.get('vehicleId'), 'car & 2');
+    assert.equal(url.searchParams.get('action'), 'record-service');
+  }
+});
