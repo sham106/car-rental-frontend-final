@@ -1,7 +1,7 @@
 import { OperationalAlertCard } from '../../components/admin/OperationalActionCenter';
 import { ComplianceRecord } from '../../types/admin';
 import React, { useState } from 'react';
-import { ShieldAlert, ShieldCheck, Plus, Search, AlertTriangle, Clock, Calendar, CheckCircle2 } from 'lucide-react';
+import { ChevronDown, Car, Plus, Search, AlertTriangle, Clock, CheckCircle2 } from 'lucide-react';
 import { useAdminData } from '../../context/AdminDataContext';
 import { StatusBadge } from '../../components/admin/StatusBadge';
 import { UploadDocumentModal } from '../../components/admin/UploadDocumentModal';
@@ -9,6 +9,8 @@ import { ADMIN_THEME } from '../../constants/adminTheme';
 
 export const ComplianceView: React.FC = () => {
   const { compliance, vehicles, notifications, refreshAll } = useAdminData();
+  const [expandedVehicle, setExpandedVehicle] = useState<string | null>(null);
+  const [documentVehicleId, setDocumentVehicleId] = useState<string | undefined>();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [tabFilter, setTabFilter] = useState<'all' | 'expired' | 'next30' | 'valid'>('all');
@@ -37,7 +39,7 @@ export const ComplianceView: React.FC = () => {
     if (tabFilter === 'valid' && c.status !== 'Valid') return false;
 
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
+      const q = searchQuery.trim().toLowerCase();
       return (
         c.vehicleReg.toLowerCase().includes(q) ||
         c.vehicleName.toLowerCase().includes(q) ||
@@ -48,6 +50,22 @@ export const ComplianceView: React.FC = () => {
     }
     return true;
   });
+
+  const missingAlerts = notifications.filter(n => n.id.startsWith('missing:compliance:'));
+  const vehicleGroups = vehicles.map(vehicle => {
+    const records = filtered.filter(record => record.vehicleId === vehicle.id);
+    const current = currentRecords.filter(record => record.vehicleId === vehicle.id);
+    const missing = missingAlerts.filter(alert => alert.vehicleId === vehicle.id);
+    const expired = current.filter(record => record.status === 'Expired').length;
+    const soon = current.filter(record => record.status === 'Expiring Soon').length;
+    const query = searchQuery.trim().toLowerCase();
+    const vehicleMatches = `${vehicle.registrationNumber} ${vehicle.brand} ${vehicle.model}`.toLowerCase().includes(query);
+    return { vehicle, records, current, missing, expired, soon, vehicleMatches };
+  }).filter(group => group.records.length > 0 || (tabFilter === 'all' && group.vehicleMatches))
+    .sort((a, b) => Number(b.expired > 0) - Number(a.expired > 0)
+      || Number(b.missing.length > 0 || b.current.length === 0) - Number(a.missing.length > 0 || a.current.length === 0)
+      || Number(b.soon > 0) - Number(a.soon > 0)
+      || a.vehicle.registrationNumber.localeCompare(b.vehicle.registrationNumber));
 
   return (
     <div className="space-y-5">
@@ -63,7 +81,7 @@ export const ComplianceView: React.FC = () => {
         </div>
         <button
           type="button"
-          onClick={() => { setRenewalRecord(undefined); setIsModalOpen(true); }}
+          onClick={() => { setRenewalRecord(undefined); setDocumentVehicleId(undefined); setIsModalOpen(true); }}
           className="px-4 py-2 text-xs font-semibold text-white bg-[#17324D] hover:bg-[#1F4366] rounded-lg shadow-2xs transition-colors flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
@@ -71,9 +89,6 @@ export const ComplianceView: React.FC = () => {
         </button>
       </div>
 
-      {notifications.some(n => n.id.startsWith('missing:compliance:')) && <section aria-label="Missing compliance records" className="grid gap-3 md:grid-cols-2">
-        {notifications.filter(n => n.id.startsWith('missing:compliance:')).map(alert => <OperationalAlertCard key={alert.id} alert={alert} />)}
-      </section>}
       {/* Expiry Priority Tabs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div
@@ -123,7 +138,7 @@ export const ComplianceView: React.FC = () => {
           </div>
           <div className="mt-1 text-2xl font-bold text-[#4F7D61]">{validList.length}</div>
           <div className="mt-1 text-[11px] text-[#65727B]">
-            Authorized for commercial road operation
+            Current documents recorded as valid
           </div>
         </div>
       </div>
@@ -141,12 +156,13 @@ export const ComplianceView: React.FC = () => {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search vehicle reg, policy #, provider (Swan, SICOM)..."
+            aria-label="Search vehicles and compliance documents"
+            placeholder="Search vehicle, certificate, policy or provider..."
             className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-[#DCE2E6] bg-[#F8F9FA] focus:bg-white text-[#24313A]"
           />
         </div>
 
-        <div className="flex items-center gap-2 text-xs">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
           <button
             type="button"
             onClick={() => setTabFilter('all')}
@@ -177,11 +193,37 @@ export const ComplianceView: React.FC = () => {
         </div>
       </div>
 
-      {/* Table */}
-      <div
-        className="rounded-xl border bg-white overflow-hidden shadow-2xs"
-        style={{ borderColor: ADMIN_THEME.border }}
-      >
+      <p className="text-xs text-[#65727B]">{vehicleGroups.length} vehicles · Select a vehicle to view its documents. Vehicles needing attention appear first.</p>
+      <div className="space-y-3">
+        {vehicleGroups.length === 0 && <div className="rounded-xl border border-[#DCE2E6] bg-white p-10 text-center text-sm text-[#65727B]">No vehicles match this filter.</div>}
+        {vehicleGroups.map(({ vehicle, records, current, missing, expired, soon }) => {
+          const expanded = expandedVehicle === vehicle.id;
+          return <section key={vehicle.id} className="overflow-hidden rounded-xl border border-[#DCE2E6] bg-white shadow-2xs">
+            <h2>
+              <button type="button" aria-expanded={expanded} aria-controls={`compliance-${vehicle.id}`}
+                onClick={() => setExpandedVehicle(expanded ? null : vehicle.id)}
+                className="flex w-full items-center gap-3 p-4 text-left hover:bg-[#F8F9FA] focus-visible:outline-2 focus-visible:outline-[#35658A]">
+                <Car className="h-5 w-5 shrink-0 text-[#35658A]" />
+                <span className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="min-w-0"><span className="block break-words text-sm font-bold text-[#24313A]">{vehicle.registrationNumber}</span><span className="block text-xs text-[#65727B]">{vehicle.brand} {vehicle.model}</span></span>
+                  <span className="flex flex-wrap gap-2 text-[11px] font-semibold">
+                    <span className="rounded-full bg-[#F1F6FA] px-2.5 py-1 text-[#35658A]">{current.length} current documents</span>
+                    {expired > 0 && <span className="rounded-full bg-[#FDEDEC] px-2.5 py-1 text-[#B9534F]">{expired} expired</span>}
+                    {soon > 0 && <span className="rounded-full bg-[#FFF9F2] px-2.5 py-1 text-[#B86645]">{soon} due soon</span>}
+                    {missing.length > 0 && <span className="rounded-full bg-[#FFF9F2] px-2.5 py-1 text-[#B86645]">{missing.length} missing document alerts</span>}
+                    {current.length === 0 && <span className="rounded-full bg-[#FFF9F2] px-2.5 py-1 text-[#B86645]">No documents recorded</span>}
+                  </span>
+                </span>
+                <ChevronDown className={`h-4 w-4 shrink-0 text-[#65727B] transition-transform ${expanded ? 'rotate-180' : ''}`} />
+              </button>
+            </h2>
+            <div id={`compliance-${vehicle.id}`} hidden={!expanded} className="border-t border-[#DCE2E6]">
+              {expanded && <>
+              <div className="flex flex-wrap items-center justify-between gap-3 p-4">
+                <p className="text-xs text-[#65727B]">{records.length} matching {showHistory ? 'current and previous' : 'current'} documents</p>
+                <button type="button" onClick={() => { setRenewalRecord(undefined); setDocumentVehicleId(vehicle.id); setIsModalOpen(true); }} className="rounded-lg bg-[#17324D] px-3 py-2 text-xs font-semibold text-white">Add document for this vehicle</button>
+              </div>
+              {missing.length > 0 && <div className="grid gap-3 px-4 pb-4 md:grid-cols-2">{missing.map(alert => <OperationalAlertCard key={alert.id} alert={alert} />)}</div>}
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
@@ -197,14 +239,14 @@ export const ComplianceView: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E5E9EC]">
-              {filtered.length === 0 ? (
+              {records.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-12 text-center text-[#65727B]">
                     No compliance documents match this filter.
                   </td>
                 </tr>
               ) : (
-                filtered.map((c) => {
+                records.map((c) => {
                   const expiryMs = new Date(c.expiryDate).getTime();
                   const diffDays = Math.ceil((expiryMs - now) / (1000 * 60 * 60 * 24));
 
@@ -264,7 +306,7 @@ export const ComplianceView: React.FC = () => {
                         {c.documentUrl && <a href={c.documentUrl} target="_blank" rel="noreferrer" className="mr-3 text-[#35658A] underline">View file</a>}
                         <button
                           type="button"
-                          onClick={() => { setRenewalRecord(c); setIsModalOpen(true); }}
+                          onClick={() => { setRenewalRecord(c); setDocumentVehicleId(c.vehicleId); setIsModalOpen(true); }}
                           className="px-2.5 py-1 text-xs font-semibold text-[#35658A] hover:text-[#17324D] bg-[#F1F6FA] hover:bg-[#EAEFF2] rounded-md transition-colors cursor-pointer"
                         >
                           Renew / File
@@ -277,10 +319,14 @@ export const ComplianceView: React.FC = () => {
             </tbody>
           </table>
         </div>
+              </>}
+            </div>
+          </section>;
+        })}
       </div>
 
       <UploadDocumentModal
-        vehicle={vehicles.find(v => v.id === renewalRecord?.vehicleId) || null}
+        vehicle={vehicles.find(v => v.id === (renewalRecord?.vehicleId || documentVehicleId)) || null}
         renewalRecord={renewalRecord}
         initialDocumentType={renewalRecord?.complianceType === 'Insurance' ? 'Insurance Certificate' : renewalRecord?.complianceType}
         vehiclesList={vehicles}
