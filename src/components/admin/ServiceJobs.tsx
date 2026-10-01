@@ -3,7 +3,8 @@ import { api, create, list, uploadFile } from '../../services/api';
 import { useAdminData } from '../../context/AdminDataContext';
 import type { AdminVehicle, MaintenanceRecord } from '../../types/admin';
 import { getTodayString } from '../../utils/dateUtils';
-import { html } from '../../utils/html';
+import { serviceCard } from '../../utils/serviceCard';
+export { serviceCard } from '../../utils/serviceCard';
 
 interface Job {
   id: string; reference: string; vehicleId: string; vehicleReg: string; vehicleName: string;
@@ -11,21 +12,6 @@ interface Job {
   deliveredBy: string; contactNumber: string; requestedWork: string; instructions: string;
   vehicleSnapshot: AdminVehicle; lastService?: MaintenanceRecord;
   completion?: Record<string, any>;
-}
-
-export function serviceCard(job: Job) {
-  const v = job.vehicleSnapshot;
-  const c = job.completion;
-  return html`<!doctype html><html><head><meta charset="utf-8"><title>${job.reference} — ${v.registrationNumber}</title>
-  <style>body{font:13px Arial,sans-serif;color:#172b40;margin:24px}h1{font-size:24px;margin-bottom:6px}h2{font-size:16px;border-bottom:1px solid #999;padding-bottom:6px}p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6}.grid{display:grid;grid-template-columns:1fr 1fr;gap:0 24px}.write{min-height:90px;background:repeating-linear-gradient(white,white 28px,#bbb 29px,white 30px)}section{break-inside:avoid}.sign{min-height:50px;border-bottom:1px solid #999}@page{size:A4;margin:14mm}@media print{body{margin:0}button{display:none}}</style></head><body>
-  <button onclick="window.print()">Print / Save as PDF</button>
-  <h1>DailyCar — Vehicle service job card</h1><p><b>${job.reference} · ${job.status}</b><br>Return this card and the invoice with the vehicle.</p>
-  <section><h2>Vehicle identification</h2><div class="grid"><p><b>${v.brand} ${v.model} · ${v.registrationNumber}</b><br>Year: ${v.year} · Colour: ${v.color || 'Not recorded'}<br>VIN: ${v.vin || 'Not recorded'}<br>Engine: ${v.engineNumber || 'Not recorded'}</p><p>Owner: ${v.ownerName}<br>Tyre size: ${v.tyreSize || 'Not recorded'}<br>Recorded odometer: ${v.mileage} km<br>Last service: ${job.lastService?.date || 'Not recorded'} / ${job.lastService?.mileage ?? '—'} km<br>Next service: ${v.nextServiceDate || 'Date not set'} / ${v.nextServiceMileage ?? '—'} km</p></div></section>
-  <section><h2>Handover and instructions</h2><div class="grid"><p>Garage: ${job.garage}<br>Date sent: ${job.dateOut}<br>Expected return: ${job.expectedReturnDate}</p><p>Delivered by: ${job.deliveredBy}<br>Contact: ${job.contactNumber || 'Not recorded'}<br>Actual mileage out: __________________</p></div><p>Requested work: ${job.requestedWork}<br>Instructions / reported problems: ${job.instructions}</p></section>
-  <section><h2>Mechanic: work completed and parts replaced</h2><p>${c?.description || ''}</p><div class="write"></div><p>Parts replaced: ${c?.partsReplaced || ''}</p><div class="write"></div></section>
-  <section><h2>Completion and next service</h2><p>Completion date: ${c?.date || '________________'}　 Service mileage: ${c?.mileage ?? '________________'} km<br>Parts cost: ${c?.partsCost ?? '____________'}　 Labour cost: ${c?.labourCost ?? '____________'}　 Total: ${c ? Number(c.partsCost) + Number(c.labourCost) : '____________'} MUR<br>Invoice number: ${c?.invoiceNumber || '________________'}<br>Next service date: ${c?.nextServiceDate || '________________'}　 Next service mileage: ${c?.nextServiceMileage ?? '________________'} km<br>Recommendations / outstanding issues: ${c?.notes || ''}</p><div class="write"></div></section>
-  <section class="grid"><p class="sign">Mechanic name / signature: ${c?.mechanic || ''}</p><p class="sign">Collected by / signature: ${c?.collectedBy || ''}</p></section>
-  </body></html>`;
 }
 
 export function ServiceJobs({ vehicle }: { vehicle?: AdminVehicle }) {
