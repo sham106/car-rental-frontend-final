@@ -44,6 +44,7 @@ export function AdminAuthProvider() {
     const recheck = () => { if (document.visibilityState === 'visible') void verify(); };
     const timer = window.setInterval(recheck, 60000);
     window.addEventListener('focus', recheck);
+    window.addEventListener('online', recheck);
     if ('BroadcastChannel' in window) {
       channel.current = new BroadcastChannel('ocr-admin-session');
       channel.current.onmessage = () => { void verify(true); };
@@ -52,6 +53,7 @@ export function AdminAuthProvider() {
       ++generation.current;
       window.clearInterval(timer);
       window.removeEventListener('focus', recheck);
+      window.removeEventListener('online', recheck);
       channel.current?.close(); channel.current = null;
     };
   }, [verify]);

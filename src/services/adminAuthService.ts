@@ -19,10 +19,13 @@ export async function authRequest<T>(path: string, body?: unknown): Promise<T> {
       credentials: 'include', cache: 'no-store',
       headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
       body: body === undefined ? undefined : JSON.stringify(body),
-      signal: AbortSignal.timeout(20000),
+      signal: AbortSignal.timeout(45000),
     });
-  } catch {
-    throw new AuthError(503, 'Unable to reach the authentication server. Please try again.');
+  } catch (error) {
+    const timedOut = error instanceof Error && ['TimeoutError', 'AbortError'].includes(error.name);
+    throw new AuthError(503, timedOut
+      ? 'The authentication server took too long to respond. It may be starting up. Please try again.'
+      : 'Cannot connect to the authentication server. Check your connection and try again.');
   }
   if (response.status === 204) return undefined as T;
   const data = await response.json().catch(() => null);
@@ -43,11 +46,22 @@ function sessionOperation<T>(operation: () => Promise<T>): Promise<T> {
   return result;
 }
 
+// Retry only read-only verification. Never replay a token rotation or login automatically.
+async function verifySession(): Promise<AdminIdentity> {
+  try {
+    return await authRequest<AdminIdentity>('/me');
+  } catch (error) {
+    if (!(error instanceof AuthError) || ![502, 503, 504].includes(error.status)) throw error;
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return authRequest<AdminIdentity>('/me');
+  }
+}
+
 // StrictMode and simultaneous refresh callers share one rotation of the refresh token.
 let pendingRestore: Promise<AdminIdentity> | null = null;
 export function restoreAdminSession(): Promise<AdminIdentity> {
   if (!pendingRestore) {
-    pendingRestore = sessionOperation(() => authRequest<AdminIdentity>('/me').catch(async error => {
+    pendingRestore = sessionOperation(() => verifySession().catch(async error => {
       if (!(error instanceof AuthError) || error.status !== 401) throw error;
       const session = await authRequest<{ user: AdminIdentity }>('/refresh', {});
       return session.user;
