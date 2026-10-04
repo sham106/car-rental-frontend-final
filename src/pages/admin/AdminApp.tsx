@@ -8,6 +8,7 @@ import { BookingsManagementView } from './BookingsManagementView';
 import { AssignmentsView } from './AssignmentsView';
 import { MaintenanceView } from './MaintenanceView';
 import { ComplianceView } from './ComplianceView';
+import { StockView } from './StockView';
 import { DocumentsView } from './DocumentsView';
 import { WebsiteListingsView } from './WebsiteListingsView';
 import { ReportsView } from './ReportsView';
@@ -33,6 +34,7 @@ const normalizeTab = (raw: string): string => {
   if (clean === 'assignments' || clean === 'internal-custody') return 'assignments';
   if (clean === 'maintenance' || clean === 'service') return 'maintenance';
   if (clean === 'compliance' || clean === 'legal') return 'compliance';
+  if (clean === 'stock' || clean === 'inventory') return 'stock';
   if (clean === 'documents' || clean === 'docs') return 'documents';
   if (clean === 'website-listings' || clean === 'website' || clean === 'listings') return 'website-listings';
   if (clean === 'reports' || clean === 'analytics') return 'reports';
@@ -146,6 +148,8 @@ const AdminContent: React.FC = () => {
         {activeTab === 'maintenance' && <MaintenanceView />}
 
         {activeTab === 'compliance' && <ComplianceView />}
+
+        {activeTab === 'stock' && <StockView />}
 
         {activeTab === 'documents' && <DocumentsView />}
 

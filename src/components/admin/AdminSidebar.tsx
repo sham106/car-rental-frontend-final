@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Package,
   LayoutDashboard,
   Car,
   Users,
@@ -70,6 +71,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       items: [
         { id: 'maintenance', label: 'Maintenance', icon: Wrench, badge: serviceIssues, badgeColor: '#B86645' },
         { id: 'compliance', label: 'Compliance & Legal', icon: ShieldAlert, badge: complianceIssues, badgeColor: '#B9534F' },
+        { id: 'stock', label: 'Stock Management', icon: Package },
         { id: 'documents', label: 'Vehicle Documents', icon: FileText },
       ],
     },
