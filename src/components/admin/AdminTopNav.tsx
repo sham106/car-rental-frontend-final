@@ -52,8 +52,7 @@ export const AdminTopNav: React.FC<AdminTopNavProps> = ({
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   const actionCount = notifications.filter(n => n.requiresAction).length;
-  const unreadEvents = notifications.filter(n => !n.requiresAction && !n.read).length;
-  const unreadNotifs = actionCount + unreadEvents;
+  const unreadNotifs = notifications.filter(n => !n.read).length;
 
   return (
     <header
@@ -142,8 +141,8 @@ export const AdminTopNav: React.FC<AdminTopNavProps> = ({
           type="button"
           onClick={() => setIsNotificationDrawerOpen(true)}
           className="relative p-2 text-[#65727B] hover:text-[#24313A] hover:bg-[#F4F6F7] rounded-lg transition-colors cursor-pointer"
-          title={`${actionCount} actions need attention, ${unreadEvents} unread updates`}
-          aria-label={`Operational alerts: ${actionCount} actions, ${unreadEvents} unread updates`}
+          title={`${unreadNotifs} unseen notifications; ${actionCount} unresolved actions`}
+          aria-label={`Operational alerts: ${unreadNotifs} unseen notifications; ${actionCount} unresolved actions`}
         >
           <Bell className="w-4 h-4" />
           {unreadNotifs > 0 && (

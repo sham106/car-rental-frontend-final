@@ -31,7 +31,7 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = () => {
       </div>
       <div className="p-4 border-b space-y-3">
         <div className="flex gap-2 text-xs">{([['actions', `Action required (${actions.length})`], ['unread', `Unseen (${unread.length})`], ['all', 'All activity']] as const).map(([key,label]) => <button type="button" key={key} aria-pressed={filter === key} onClick={() => setFilter(key)} className={`rounded-lg px-3 py-2 ${filter === key ? 'bg-[#17324D] text-white' : 'bg-[#F4F6F7]'}`}>{label}</button>)}</div>
-        <p className="text-xs text-[#65727B]">Alerts stay in Action required until a renewal, service record or return resolves them. Escalations become unseen again.</p>
+        <p className="text-xs text-[#65727B]">Marking alerts seen clears the bell and Maintenance / Compliance badges. Unresolved issues stay in Action required until a renewal, service record or return resolves them. Escalations become unseen again.</p>
         {unread.length > 0 && <button type="button" disabled={saving} onClick={() => acknowledge()} className="text-xs text-[#35658A] font-semibold inline-flex gap-1 items-center"><Check className="h-3.5 w-3.5" />Mark all seen</button>}
         {actionError && <p role="status" className="text-sm text-red-700">Alert refresh failed. Displayed information may be outdated.</p>}
         {error && <p role="alert" className="text-sm text-red-700">{error}</p>}

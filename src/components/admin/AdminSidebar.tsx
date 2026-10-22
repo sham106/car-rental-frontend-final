@@ -41,8 +41,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   const { bookings, notifications } = useAdminData();
 
   const pendingBookings = bookings.filter((b) => b.bookingStatus === 'pending').length;
-  const complianceIssues = notifications.filter(n => n.requiresAction && (n.type === 'compliance_expiring' || n.id.startsWith('missing:compliance:'))).length;
-  const serviceIssues = notifications.filter(n => n.requiresAction && (n.type === 'service_due' || n.id.startsWith('missing:service:'))).length;
+  const complianceIssues = notifications.filter(n => !n.read && n.requiresAction && (n.type === 'compliance_expiring' || n.id.startsWith('missing:compliance:'))).length;
+  const serviceIssues = notifications.filter(n => !n.read && n.requiresAction && (n.type === 'service_due' || n.type === 'service_overdue' || n.id.startsWith('missing:service:'))).length;
 
   const NAV_SECTIONS = [
     {
@@ -158,7 +158,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                     key={item.id}
                     type="button"
                     onClick={() => onSelectTab(item.id)}
-                    title={isCollapsed ? item.label : undefined}
+                    title={item.badge ? `${item.label}: ${item.badge} ${item.id === 'bookings' ? 'pending bookings' : 'unseen alerts'}` : item.label}
+                    aria-label={item.badge ? `${item.label}: ${item.badge} ${item.id === 'bookings' ? 'pending bookings' : 'unseen alerts'}` : item.label}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer text-left relative group ${
                       isActive
                         ? 'bg-[#17324D] text-white font-semibold'
