@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { vehicleManagement } from '../src/utils/vehicleManagement.ts';
+import { compareVehiclesByCreatedAt } from '../src/utils/vehicleSorting.ts';
 import { INITIAL_ADMIN_VEHICLES } from '../src/mocks/adminFleet.ts';
 import type { ComplianceRecord, MaintenanceRecord } from '../src/types/admin.ts';
 
@@ -22,4 +23,16 @@ test('last service uses completion date and service mileage, not input order or 
   const service = {vehicleId:vehicle.id,date:'2026-01-01',mileage:100} as MaintenanceRecord;
   const result = vehicleManagement(vehicle, [], [{...service,id:'older'}, {...service,id:'latest',date:'2026-03-01',mileage:200}, {...service,id:'other',vehicleId:'other',date:'2030-01-01'}]);
   assert.equal(result.lastService?.id,'latest');
+});
+
+test('fleet vehicle sorting puts newest additions first and undated records last', () => {
+  const vehicle = INITIAL_ADMIN_VEHICLES[0];
+  const older = { ...vehicle, id: 'older', registrationNumber: 'AAA', createdAt: '2025-01-01T00:00:00Z' };
+  const newer = { ...vehicle, id: 'newer', registrationNumber: 'BBB', createdAt: '2026-01-01T00:00:00Z' };
+  const undated = { ...vehicle, id: 'undated', registrationNumber: 'CCC', createdAt: 'not-a-date' };
+
+  assert.deepEqual(
+    [older, undated, newer].sort(compareVehiclesByCreatedAt).map(({ id }) => id),
+    ['newer', 'older', 'undated'],
+  );
 });

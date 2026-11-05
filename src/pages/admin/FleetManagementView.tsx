@@ -26,6 +26,7 @@ import { AssignVehicleModal } from '../../components/admin/AssignVehicleModal';
 import { RecordMaintenanceModal } from '../../components/admin/RecordMaintenanceModal';
 import { UploadDocumentModal } from '../../components/admin/UploadDocumentModal';
 import { ADMIN_THEME } from '../../constants/adminTheme';
+import { compareVehiclesByCreatedAt } from '../../utils/vehicleSorting';
 
 interface FleetManagementViewProps {
   onOpenAddVehicle: () => void;
@@ -52,8 +53,8 @@ export const FleetManagementView: React.FC<FleetManagementViewProps> = ({
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [ownerFilter, setOwnerFilter] = useState<string>('all');
-  const [sortField, setSortField] = useState<'registration' | 'brand' | 'mileage' | 'dailyRate'>('registration');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [sortField, setSortField] = useState<'dateAdded' | 'registration' | 'brand' | 'mileage' | 'dailyRate'>('dateAdded');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   // Modals state
   const [statusModalVehicle, setStatusModalVehicle] = useState<AdminVehicle | null>(null);
@@ -96,6 +97,10 @@ export const FleetManagementView: React.FC<FleetManagementViewProps> = ({
         return true;
       })
       .sort((a, b) => {
+        if (sortField === 'dateAdded') {
+          const comparison = compareVehiclesByCreatedAt(a, b);
+          return sortDirection === 'desc' ? comparison : -comparison;
+        }
         let comp = 0;
         if (sortField === 'registration') {
           comp = a.registrationNumber.localeCompare(b.registrationNumber);
@@ -110,7 +115,7 @@ export const FleetManagementView: React.FC<FleetManagementViewProps> = ({
       });
   }, [vehicles, searchQuery, statusFilter, categoryFilter, ownerFilter, sortField, sortDirection]);
 
-  const toggleSort = (field: 'registration' | 'brand' | 'mileage' | 'dailyRate') => {
+  const toggleSort = (field: 'dateAdded' | 'registration' | 'brand' | 'mileage' | 'dailyRate') => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
@@ -241,6 +246,16 @@ export const FleetManagementView: React.FC<FleetManagementViewProps> = ({
               <tr className="border-b border-[#DCE2E6] bg-[#F8F9FA] text-[#65727B] font-semibold uppercase tracking-wider text-[11px]">
                 <th className="py-3 px-4">Vehicle Details</th>
                 <th
+                  onClick={() => toggleSort('dateAdded')}
+                  className="py-3 px-3 cursor-pointer hover:text-[#24313A]"
+                  aria-sort={sortField === 'dateAdded' ? (sortDirection === 'desc' ? 'descending' : 'ascending') : 'none'}
+                >
+                  <div className="flex items-center gap-1">
+                    <span>Date Added</span>
+                    <ArrowUpDown className="w-3 h-3" />
+                  </div>
+                </th>
+                <th
                   onClick={() => toggleSort('registration')}
                   className="py-3 px-3 cursor-pointer hover:text-[#24313A]"
                 >
@@ -277,7 +292,7 @@ export const FleetManagementView: React.FC<FleetManagementViewProps> = ({
             <tbody className="divide-y divide-[#E5E9EC]">
               {filteredVehicles.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-[#65727B]">
+                  <td colSpan={10} className="py-12 text-center text-[#65727B]">
                     No vehicles match your active search and filter criteria.
                   </td>
                 </tr>
@@ -316,6 +331,12 @@ export const FleetManagementView: React.FC<FleetManagementViewProps> = ({
                             </div>
                           </div>
                         </div>
+                      </td>
+
+                      <td className="py-3 px-3 whitespace-nowrap text-[#65727B]">
+                        {Number.isFinite(Date.parse(v.createdAt))
+                          ? new Date(v.createdAt).toLocaleDateString()
+                          : 'Not recorded'}
                       </td>
 
                       {/* Registration / VIN */}
