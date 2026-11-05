@@ -20,6 +20,7 @@ const DOC_TYPES: DocumentType[] = [
   'Fitness Certificate',
   'MVL',
   'Licence',
+  'Registration Book',
   'Purchase Document',
   'Service Invoice',
   'Inspection',

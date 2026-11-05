@@ -94,6 +94,7 @@ export const DocumentsView: React.FC = () => {
             <option value="Insurance Certificate">Insurance Certificate</option>
             <option value="Fitness Certificate">Fitness Certificate</option>
             <option value="MVL">MVL</option>
+            <option value="Registration Book">Registration Book</option>
             <option value="Purchase Document">Purchase Document</option>
             <option value="Service Invoice">Service Invoice</option>
             <option value="Rental Agreement">Rental Agreement</option>

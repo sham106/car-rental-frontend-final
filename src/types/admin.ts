@@ -48,6 +48,7 @@ export type DocumentType =
   | 'Fitness Certificate'
   | 'MVL'
   | 'Licence'
+  | 'Registration Book'
   | 'Purchase Document'
   | 'Service Invoice'
   | 'Inspection'
