@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { vehicleManagement } from '../src/utils/vehicleManagement.ts';
 import { compareVehiclesByCreatedAt } from '../src/utils/vehicleSorting.ts';
+import { createVehicleSlug, slugify } from '../src/utils/slug.ts';
 import { INITIAL_ADMIN_VEHICLES } from '../src/mocks/adminFleet.ts';
 import type { ComplianceRecord, MaintenanceRecord } from '../src/types/admin.ts';
 
@@ -35,4 +36,11 @@ test('fleet vehicle sorting puts newest additions first and undated records last
     [older, undated, newer].sort(compareVehiclesByCreatedAt).map(({ id }) => id),
     ['newer', 'older', 'undated'],
   );
+});
+
+test('vehicle slugs normalize punctuation, accents, and spacing to the API format', () => {
+  assert.equal(slugify('  Citroën & Co. '), 'citroen-co');
+  assert.equal(slugify('東京 🚙'), '');
+  assert.match(createVehicleSlug('Citroën & Co.', 'C3 Aircross'), /^citroen-co-c3-aircross-\d+$/);
+  assert.match(createVehicleSlug('東京', '🚙'), /^vehicle-\d+$/);
 });

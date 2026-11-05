@@ -6,6 +6,7 @@ import { useAdminData } from '../../context/AdminDataContext';
 import { adminVehicleService } from '../../services/admin/adminVehicleService';
 import { RecordEditor } from '../../components/admin/RecordEditor';
 import { ADMIN_THEME } from '../../constants/adminTheme';
+import { createVehicleSlug } from '../../utils/slug';
 
 interface AddVehicleModalProps {
   vehicleToEdit?: AdminVehicle | null;
@@ -205,7 +206,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
           photos: finalPhotos,
         });
       } else {
-        const slug = `${brand.toLowerCase()}-${model.toLowerCase().replace(/\s+/g, '-')}-${Date.now().toString().slice(-4)}`;
+        const slug = createVehicleSlug(brand, model);
         savedVehicle = await adminVehicleService.createVehicle({
           slug,
           brand: brand.trim(),
