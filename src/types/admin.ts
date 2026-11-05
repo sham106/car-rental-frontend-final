@@ -251,6 +251,9 @@ export interface ComplianceRecord {
 
 export interface VehicleDocument {
   id: string;
+  fileId?: string;
+  complianceId?: string;
+  version?: number;
   vehicleId: string;
   vehicleReg: string;
   vehicleName: string;

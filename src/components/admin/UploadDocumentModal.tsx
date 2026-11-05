@@ -1,7 +1,7 @@
 import { uploadFile } from '../../services/api';
 import React, { useState } from 'react';
 import { X, FileText, Upload, Check, AlertCircle } from 'lucide-react';
-import { AdminVehicle, DocumentType, ComplianceRecord } from '../../types/admin';
+import { AdminVehicle, DocumentType, ComplianceRecord, VehicleDocument } from '../../types/admin';
 import { adminDocumentService } from '../../services/admin/adminDocumentService';
 import { ADMIN_THEME } from '../../constants/adminTheme';
 
@@ -10,6 +10,8 @@ interface UploadDocumentModalProps {
   vehiclesList?: AdminVehicle[];
   initialDocumentType?: DocumentType;
   renewalRecord?: ComplianceRecord;
+  documentToEdit?: VehicleDocument;
+  complianceRecord?: ComplianceRecord;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => Promise<void>;
@@ -33,6 +35,8 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
   vehiclesList = [],
   initialDocumentType = 'Insurance Certificate',
   renewalRecord,
+  documentToEdit,
+  complianceRecord,
   isOpen,
   onClose,
   onSuccess,
@@ -57,15 +61,18 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
   React.useEffect(() => {
     if (!isOpen) return;
     setSelectedVehicleId(vehicle?.id || '');
-    setDocumentType(initialDocumentType);
-    setTitle(initialDocumentType);
-    setIssueDate(''); setExpiryDate(''); setNotes('');
-    setCompany(renewalRecord?.company || renewalRecord?.provider || '');
-    setBroker(renewalRecord?.broker || '');
-    setPolicyNumber(renewalRecord?.policyNumber || '');
-    setPremium(renewalRecord?.premium == null ? '' : String(renewalRecord.premium));
+    setDocumentType(documentToEdit?.documentType || initialDocumentType);
+    setTitle(documentToEdit?.title || initialDocumentType);
+    setIssueDate(documentToEdit?.issueDate || '');
+    setExpiryDate(documentToEdit?.expiryDate || '');
+    setNotes(documentToEdit?.notes || '');
+    setCompany(complianceRecord?.company || complianceRecord?.provider || renewalRecord?.company || renewalRecord?.provider || '');
+    setBroker(complianceRecord?.broker || renewalRecord?.broker || '');
+    setPolicyNumber(complianceRecord?.policyNumber || renewalRecord?.policyNumber || '');
+    const recordPremium = complianceRecord?.premium ?? renewalRecord?.premium;
+    setPremium(recordPremium == null ? '' : String(recordPremium));
     setSelectedFile(null); setError('');
-  }, [isOpen, vehicle?.id, initialDocumentType, renewalRecord?.id]);
+  }, [isOpen, vehicle?.id, initialDocumentType, renewalRecord?.id, documentToEdit?.id, complianceRecord?.id]);
 
   if (!isOpen) return null;
 
@@ -80,7 +87,7 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
     if (isCompliance && !issueDate) { setError('Enter the issue date for this certification.'); return; }
     if (issueDate && expiryDate && expiryDate < issueDate) { setError('Expiry must be on or after issue date.'); return; }
     if (documentType === 'Insurance Certificate' && (!company.trim() || !policyNumber.trim() || premium === '')) { setError('Enter the insurance company, policy number and premium. Enter 0 if there is no premium.'); return; }
-    if (!selectedFile) { setError('Select a PDF or image to upload.'); return; }
+    if (!selectedFile && !documentToEdit) { setError('Select a PDF or image to upload.'); return; }
     if (!title.trim()) {
       setError('Please provide a document title.');
       return;
@@ -89,19 +96,28 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
     try {
       setIsSubmitting(true);
       setError('');
-      const uploaded = await uploadFile(selectedFile, 'document');
-      await adminDocumentService.createDocument({
-        vehicleId: currentVehicle.id,
-        vehicleReg: currentVehicle.registrationNumber,
-        vehicleName: `${currentVehicle.brand} ${currentVehicle.model}`,
+      const uploaded = selectedFile ? await uploadFile(selectedFile, 'document') : null;
+      const fileId = uploaded?.id || documentToEdit?.fileId;
+      if (!fileId) throw new Error('The saved file reference is missing. Refresh the document and try again.');
+      const documentData = {
         documentType,
         title: title.trim(),
         issueDate,
-        ...(expiryDate ? { expiryDate } : {}),
-        fileId: uploaded.id,
-        ...(isCompliance ? { compliance: { company: company.trim(), broker: documentType === 'Insurance Certificate' ? broker.trim() : '', policyNumber: policyNumber.trim(), premium: documentType === 'Insurance Certificate' ? Number(premium) : 0 } } : {}),
+        expiryDate,
+        fileId,
         notes: notes.trim(),
-      });
+        ...(isCompliance ? { compliance: { company: company.trim(), broker: documentType === 'Insurance Certificate' ? broker.trim() : '', policyNumber: policyNumber.trim(), premium: documentType === 'Insurance Certificate' ? Number(premium) : 0 } } : {}),
+      };
+      if (documentToEdit) {
+        await adminDocumentService.updateDocument(documentToEdit.id, documentData);
+      } else {
+        await adminDocumentService.createDocument({
+          ...documentData,
+          vehicleId: currentVehicle.id,
+          vehicleReg: currentVehicle.registrationNumber,
+          vehicleName: `${currentVehicle.brand} ${currentVehicle.model}`,
+        });
+      }
       await onSuccess();
       onClose();
     } catch (err) {
@@ -123,7 +139,7 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
               <FileText className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-semibold text-[#24313A]">{renewalRecord ? 'Renew Certification' : 'Upload Fleet Document'}</h3>
+              <h3 className="text-base font-semibold text-[#24313A]">{documentToEdit ? 'Edit Fleet Document' : renewalRecord ? 'Renew Certification' : 'Upload Fleet Document'}</h3>
               <p className="text-xs text-[#65727B] mt-0.5">Attach digital records, policies, and inspections</p>
             </div>
           </div>
@@ -173,6 +189,7 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
               </label>
               <select
                 value={documentType}
+                disabled={Boolean(documentToEdit && complianceRecord)}
                 onChange={(e) => { setDocumentType(e.target.value as DocumentType); setTitle(e.target.value); setCompany(''); setBroker(''); setPolicyNumber(''); setPremium(''); }}
                 className="w-full text-sm p-2 rounded-lg border border-[#DCE2E6] bg-white text-[#24313A]"
               >
@@ -228,7 +245,7 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
 
           {isCompliance && <fieldset className="space-y-3 rounded-lg border border-[#DCE2E6] p-3">
             <legend className="font-semibold text-sm">Certification details</legend>
-            <p className="text-xs text-[#65727B]">This upload also records the certification and its expiry in Compliance.</p>
+            <p className="text-xs text-[#65727B]">{documentToEdit ? 'Saving updates the existing certification record; it will not create a renewal.' : 'This upload also records the certification and its expiry in Compliance.'}</p>
             <div className="grid grid-cols-2 gap-3">
               <label className="text-xs">{documentType === 'Insurance Certificate' ? 'Insurance Company' : 'Issuing Authority'}<input className="w-full border rounded p-2 mt-1" required={documentType === 'Insurance Certificate'} value={company} onChange={e => setCompany(e.target.value)} /></label>
               <label className="text-xs">{documentType === 'Insurance Certificate' ? 'Policy Number' : 'Certificate Number'}<input className="w-full border rounded p-2 mt-1" required={documentType === 'Insurance Certificate'} value={policyNumber} onChange={e => setPolicyNumber(e.target.value)} /></label>
@@ -241,18 +258,19 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
           {/* File Upload */}
           <div>
             <label className="block text-xs font-semibold text-[#24313A] uppercase tracking-wider mb-1">
-              File Attachment
+              {documentToEdit ? 'Replace File Attachment (optional)' : 'File Attachment'}
             </label>
             <div className="p-4 border-2 border-dashed border-[#DCE2E6] rounded-xl flex flex-col items-center justify-center text-center bg-[#F8F9FA]">
               <Upload className="w-8 h-8 text-[#65727B] mb-2" />
-              <input aria-label="Document file" key={`${isOpen}-${vehicle?.id || selectedVehicleId}`} type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onChange={e => setSelectedFile(e.target.files?.[0] || null)} />
+              <input aria-label="Document file" key={`${isOpen}-${documentToEdit?.id || vehicle?.id || selectedVehicleId}`} type="file" required={!documentToEdit} accept="application/pdf,image/jpeg,image/png,image/webp" onChange={e => setSelectedFile(e.target.files?.[0] || null)} />
+              {documentToEdit && <a className="mt-2 text-xs text-[#35658A] underline" href={documentToEdit.fileUrl} target="_blank" rel="noreferrer">View current attachment</a>}
               <div className="text-xs font-medium text-[#24313A]">
                 {selectedFile ? (
                   <span className="text-[#4F7D61] font-semibold flex items-center gap-1">
                     <Check className="w-4 h-4 inline" /> {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
                   </span>
                 ) : (
-                  'Choose a PDF or image to attach'
+                  documentToEdit ? 'Leave blank to keep the current file' : 'Choose a PDF or image to attach'
                 )}
               </div>
               <p className="text-[11px] text-[#65727B] mt-1">Supports PDF, JPG, PNG and WebP up to 10 MB</p>
@@ -292,7 +310,7 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
               disabled={isSubmitting}
               className="px-5 py-2 text-sm font-medium text-white bg-[#17324D] hover:bg-[#1F4366] disabled:opacity-50 rounded-lg transition-colors cursor-pointer"
             >
-              {isSubmitting ? 'Uploading...' : 'Upload Document'}
+              {isSubmitting ? (documentToEdit ? 'Saving...' : 'Uploading...') : documentToEdit ? 'Save Changes' : 'Upload Document'}
             </button>
           </div>
         </form>

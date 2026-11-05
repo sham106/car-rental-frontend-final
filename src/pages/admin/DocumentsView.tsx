@@ -4,15 +4,17 @@ import { useAdminData } from '../../context/AdminDataContext';
 import { UploadDocumentModal } from '../../components/admin/UploadDocumentModal';
 import { adminDocumentService } from '../../services/admin/adminDocumentService';
 import { ADMIN_THEME } from '../../constants/adminTheme';
+import type { ComplianceRecord, VehicleDocument } from '../../types/admin';
 
 export const DocumentsView: React.FC = () => {
-  const { documents, vehicles, refreshAll } = useAdminData();
+  const { documents, vehicles, compliance, refreshAll } = useAdminData();
   const [expandedVehicle, setExpandedVehicle] = useState<string | null>(null);
   const [uploadVehicleId, setUploadVehicleId] = useState<string | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [previewDoc, setPreviewDoc] = useState<typeof documents[0] | null>(null);
+  const [documentToEdit, setDocumentToEdit] = useState<VehicleDocument | undefined>();
 
   const filtered = documents.filter((d) => {
     if (typeFilter !== 'all' && d.documentType !== typeFilter) return false;
@@ -58,7 +60,7 @@ export const DocumentsView: React.FC = () => {
         </div>
         <button
           type="button"
-          onClick={() => { setUploadVehicleId(null); setIsUploadModalOpen(true); }}
+          onClick={() => { setDocumentToEdit(undefined); setUploadVehicleId(null); setIsUploadModalOpen(true); }}
           className="px-4 py-2 text-xs font-semibold text-white bg-[#17324D] hover:bg-[#1F4366] rounded-lg shadow-2xs transition-colors flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
         >
           <Upload className="w-4 h-4" />
@@ -134,7 +136,7 @@ export const DocumentsView: React.FC = () => {
               {expanded && <>
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                   <p className="text-xs text-[#65727B]">{files.length} matching documents</p>
-                  <button type="button" onClick={() => { setUploadVehicleId(vehicle.id); setIsUploadModalOpen(true); }} className="rounded-lg bg-[#17324D] px-3 py-2 text-xs font-semibold text-white">Upload for this vehicle</button>
+                  <button type="button" onClick={() => { setDocumentToEdit(undefined); setUploadVehicleId(vehicle.id); setIsUploadModalOpen(true); }} className="rounded-lg bg-[#17324D] px-3 py-2 text-xs font-semibold text-white">Upload for this vehicle</button>
                 </div>
                 {files.length === 0 && <p className="py-6 text-center text-sm text-[#65727B]">{total === 0 ? 'No documents recorded for this vehicle. Upload its first document above.' : 'No documents match the current search.'}</p>}
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -182,13 +184,22 @@ export const DocumentsView: React.FC = () => {
               </div>
 
               <div className="mt-4 pt-3 border-t border-[#E5E9EC] flex items-center justify-between text-xs">
-                <button
-                  type="button"
-                  onClick={() => setPreviewDoc(d)}
-                  className="text-[#35658A] hover:underline font-semibold flex items-center gap-1 cursor-pointer"
-                >
-                  <Eye className="w-3.5 h-3.5" /> Preview
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setPreviewDoc(d)}
+                    className="text-[#35658A] hover:underline font-semibold flex items-center gap-1 cursor-pointer"
+                  >
+                    <Eye className="w-3.5 h-3.5" /> Preview
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setDocumentToEdit(d); setUploadVehicleId(d.vehicleId); setIsUploadModalOpen(true); }}
+                    className="text-[#35658A] hover:underline font-semibold cursor-pointer"
+                  >
+                    Edit details
+                  </button>
+                </div>
                 <button
                   type="button"
                   onClick={() => handleDelete(d.id)}
@@ -208,10 +219,15 @@ export const DocumentsView: React.FC = () => {
       </div>
 
       <UploadDocumentModal
-        vehicle={vehicles.find(vehicle => vehicle.id === uploadVehicleId) || null}
+        vehicle={vehicles.find(vehicle => vehicle.id === (documentToEdit?.vehicleId || uploadVehicleId)) || null}
         vehiclesList={vehicles}
+        initialDocumentType={documentToEdit?.documentType}
+        documentToEdit={documentToEdit}
+        complianceRecord={documentToEdit?.complianceId
+          ? compliance.find((record: ComplianceRecord) => record.id === documentToEdit.complianceId)
+          : compliance.find((record) => record.id === `document:${documentToEdit?.id}`)}
         isOpen={isUploadModalOpen}
-        onClose={() => setIsUploadModalOpen(false)}
+        onClose={() => { setIsUploadModalOpen(false); setDocumentToEdit(undefined); }}
         onSuccess={refreshAll}
       />
 

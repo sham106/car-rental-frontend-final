@@ -14,7 +14,7 @@ import {
   AlertCircle,
   ExternalLink,
 } from 'lucide-react';
-import { AdminVehicle, DocumentType, ComplianceRecord } from '../../types/admin';
+import { AdminVehicle, DocumentType, ComplianceRecord, VehicleDocument } from '../../types/admin';
 import { useAdminData } from '../../context/AdminDataContext';
 import { StatusBadge } from '../../components/admin/StatusBadge';
 import { UploadDocumentModal } from '../../components/admin/UploadDocumentModal';
@@ -47,8 +47,9 @@ export const VehicleProfileModal: React.FC<VehicleProfileModalProps> = ({
   const [action, setAction] = useState<'document' | 'maintenance' | 'assignment' | null>(null);
   const [uploadType, setUploadType] = useState<DocumentType>('Insurance Certificate');
   const [renewalRecord, setRenewalRecord] = useState<ComplianceRecord | undefined>();
-  const openUpload = (type: DocumentType = 'Insurance Certificate', record?: ComplianceRecord) => { setUploadType(type); setRenewalRecord(record); setAction('document'); };
-  useEffect(() => { setActiveTab('overview'); setAction(null); }, [vehicle?.id, isOpen]);
+  const [documentToEdit, setDocumentToEdit] = useState<VehicleDocument | undefined>();
+  const openUpload = (type: DocumentType = 'Insurance Certificate', record?: ComplianceRecord) => { setDocumentToEdit(undefined); setUploadType(type); setRenewalRecord(record); setAction('document'); };
+  useEffect(() => { setActiveTab('overview'); setAction(null); setDocumentToEdit(undefined); }, [vehicle?.id, isOpen]);
   if (!isOpen || !vehicle) return null;
   vehicle = vehicles.find(v => v.id === vehicle.id) || vehicle;
 
@@ -511,14 +512,23 @@ export const VehicleProfileModal: React.FC<VehicleProfileModalProps> = ({
                           <div className="font-semibold text-[#24313A]">{d.title}</div>
                           <div className="text-[11px] text-[#65727B]">{d.documentType} ({d.fileSize})<div>Issued: {d.issueDate || 'Not recorded'} · Expires: {d.expiryDate || 'Not applicable'}</div></div>
                         </div>
-                        <a
-                          href={d.fileUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-[#35658A] hover:underline text-[11px] font-medium"
-                        >
-                          View File
-                        </a>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => { setDocumentToEdit(d); setUploadType(d.documentType); setRenewalRecord(undefined); setAction('document'); }}
+                            className="text-[#35658A] hover:underline text-[11px] font-medium"
+                          >
+                            Edit
+                          </button>
+                          <a
+                            href={d.fileUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[#35658A] hover:underline text-[11px] font-medium"
+                          >
+                            View File
+                          </a>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -592,7 +602,9 @@ export const VehicleProfileModal: React.FC<VehicleProfileModalProps> = ({
           )}
         </div>
       </div>
-      {action === 'document' && <UploadDocumentModal vehicle={vehicle} initialDocumentType={uploadType} renewalRecord={renewalRecord} isOpen onClose={() => setAction(null)} onSuccess={async () => { await refreshAll(); setActiveTab('compliance'); }} />}
+      {action === 'document' && <UploadDocumentModal vehicle={vehicle} initialDocumentType={documentToEdit?.documentType || uploadType} renewalRecord={renewalRecord} documentToEdit={documentToEdit} complianceRecord={documentToEdit?.complianceId
+        ? compliance.find(record => record.id === documentToEdit.complianceId)
+        : compliance.find(record => record.id === `document:${documentToEdit?.id}`)} isOpen onClose={() => { setAction(null); setDocumentToEdit(undefined); }} onSuccess={async () => { await refreshAll(); setActiveTab('compliance'); }} />}
       {action === 'maintenance' && <RecordMaintenanceModal vehicle={vehicle} isOpen onClose={() => setAction(null)} onSuccess={async () => { await refreshAll(); setActiveTab('maintenance'); }} />}
       {action === 'assignment' && <AssignVehicleModal vehicle={vehicle} isOpen onClose={() => setAction(null)} onSuccess={async () => { await refreshAll(); setActiveTab('assignments'); }} />}
     </div>
