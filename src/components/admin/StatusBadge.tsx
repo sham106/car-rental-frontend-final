@@ -268,6 +268,21 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
         <span>Expiring Soon</span>
       </span>
     );
+  } else if (normStatus.includes('no expiry')) {
+    return (
+      <span
+        className={`inline-flex items-center font-medium rounded-full ${
+          size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-xs'
+        } ${className}`}
+        style={{
+          backgroundColor: '#F1F4F6',
+          color: '#65727B',
+          border: '1px solid #DCE2E6',
+        }}
+      >
+        <span>No expiry date</span>
+      </span>
+    );
   } else {
     return (
       <span

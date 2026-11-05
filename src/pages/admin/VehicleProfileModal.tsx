@@ -22,6 +22,7 @@ import { RecordMaintenanceModal } from '../../components/admin/RecordMaintenance
 import { AssignVehicleModal } from '../../components/admin/AssignVehicleModal';
 import { VehicleSetupChecklist } from '../../components/admin/VehicleSetupChecklist';
 import { ADMIN_THEME } from '../../constants/adminTheme';
+import { vehicleManagement } from '../../utils/vehicleManagement';
 
 interface VehicleProfileModalProps {
   vehicle: AdminVehicle | null;
@@ -61,7 +62,7 @@ export const VehicleProfileModal: React.FC<VehicleProfileModalProps> = ({
   const lastService = vehicleMaintenance[0];
   const currentAssignment = vehicleAssignments.find(a => a.id === vehicle.currentAssignmentId);
   const currentBooking = vehicleBookings.find(b => b.id === vehicle.currentBookingId);
-  const latestCompliance = ['Fitness Certificate', 'Insurance', 'MVL', 'Licence'].map(type => ({type, record: vehicleCompliance.filter(c => c.complianceType === type).sort((a, b) => b.expiryDate.localeCompare(a.expiryDate))[0]}));
+  const { certifications: latestCompliance } = vehicleManagement(vehicle, compliance, maintenance);
   const totalEarnings = vehicleBookings
     .filter((b) => b.bookingStatus === 'completed')
     .reduce((sum, b) => sum + (b.finalAmount ?? b.estimatedAmount), 0);
@@ -288,7 +289,7 @@ export const VehicleProfileModal: React.FC<VehicleProfileModalProps> = ({
                 </dl>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {latestCompliance.map(({type, record}) => <button type="button" key={type} onClick={() => setActiveTab('compliance')} className="text-left rounded border p-3">
-                    <span className="font-semibold block">{type}</span><span className="block">{record?.status || 'Not recorded'}</span><span className="text-[#65727B]">{record ? `Expires: ${record.expiryDate}` : 'Upload certification'}</span>
+                    <span className="font-semibold block">{type}</span><span className="block">{record?.status || 'Not recorded'}</span><span className="text-[#65727B]">{record ? `Expires: ${record.expiryDate || 'Not applicable'}` : 'Upload certification'}</span>
                   </button>)}
                 </div>
               </section>
@@ -485,7 +486,7 @@ export const VehicleProfileModal: React.FC<VehicleProfileModalProps> = ({
                         </span>
                       </div>
                       <div className="text-[11px] text-[#65727B] mt-1">Company / Authority: {c.company || c.provider || 'Not recorded'}</div>
-                      <div className="text-[11px] text-[#65727B]">Issued: {c.issueDate} · Expires: {c.expiryDate}</div>
+                      <div className="text-[11px] text-[#65727B]">Issued: {c.issueDate} · Expires: {c.expiryDate || 'Not applicable'}</div>
                       <div className="text-[11px]">Policy / Certificate: {c.policyNumber || 'Not recorded'}</div>
                       {c.complianceType === 'Insurance' && <><div>Broker: {c.broker || 'Not recorded'}</div><div>Insurance Premium: {c.premium == null ? 'Not recorded' : `Rs ${c.premium.toLocaleString()}`}</div></>}
                       {c.documentUrl && <a className="text-[#35658A] underline" href={c.documentUrl} target="_blank" rel="noreferrer">View Certificate</a>}

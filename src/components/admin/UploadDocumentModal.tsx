@@ -98,7 +98,7 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
         issueDate,
         ...(expiryDate ? { expiryDate } : {}),
         fileId: uploaded.id,
-        ...(isCompliance && expiryDate ? { compliance: { company: company.trim(), broker: documentType === 'Insurance Certificate' ? broker.trim() : '', policyNumber: policyNumber.trim(), premium: documentType === 'Insurance Certificate' ? Number(premium) : 0 } } : {}),
+        ...(isCompliance ? { compliance: { company: company.trim(), broker: documentType === 'Insurance Certificate' ? broker.trim() : '', policyNumber: policyNumber.trim(), premium: documentType === 'Insurance Certificate' ? Number(premium) : 0 } } : {}),
         notes: notes.trim(),
       });
       await onSuccess();

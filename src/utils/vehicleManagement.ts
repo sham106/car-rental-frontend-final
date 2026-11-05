@@ -16,7 +16,12 @@ export function vehicleManagement(vehicle: AdminVehicle, compliance: ComplianceR
   ].filter(([, value]) => value == null || value === '').map(([label]) => String(label));
   const certifications = certificationTypes.map(({ type, documentType }) => {
     const record = compliance.filter(c => c.vehicleId === vehicle.id && c.complianceType === type)
-      .sort((a, b) => b.expiryDate.localeCompare(a.expiryDate) || b.createdAt.localeCompare(a.createdAt))[0];
+      .sort((a, b) => {
+        if (a.expiryDate && b.expiryDate) {
+          return b.expiryDate.localeCompare(a.expiryDate) || b.createdAt.localeCompare(a.createdAt);
+        }
+        return b.createdAt.localeCompare(a.createdAt);
+      })[0];
     const missing = !record ? ['Certificate and document'] : [
       ...(!record.documentUrl ? ['Document file'] : []),
       ...(type === 'Insurance' && !(record.company || record.provider) ? ['Insurance company'] : []),

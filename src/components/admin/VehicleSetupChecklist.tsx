@@ -46,7 +46,7 @@ export function VehicleSetupChecklist({ vehicle, compliance, maintenance, onEdit
       {certifications.map(({ type, documentType, record, missing }) => <div key={type} className="rounded-lg border bg-white p-3 space-y-2">
         <h4 className="font-semibold">{type}</h4>
         <p className={record?.status === 'Expired' || missing.length ? 'text-[#B9534F]' : 'text-[#24313A]'}>{record?.status || 'Not recorded'}</p>
-        {record && <p>Expires: {record.expiryDate}</p>}
+        {record && <p>Expires: {record.expiryDate || 'Not applicable'}</p>}
         {missing.length > 0 && <p className="text-[#B9534F]">Missing: {missing.join(', ')}</p>}
         {record?.documentUrl && <a className={`${buttonClass} block`} href={record.documentUrl} target="_blank" rel="noreferrer">View {type}</a>}
         <button type="button" className={buttonClass} onClick={() => onUpload(documentType, record)}>{record ? 'Renew / complete' : 'Add certificate'}</button>

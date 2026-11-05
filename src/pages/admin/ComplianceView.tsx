@@ -22,7 +22,9 @@ export const ComplianceView: React.FC = () => {
   for (const record of compliance) {
     const key = `${record.vehicleId}:${record.complianceType}`;
     const previous = latest.get(key);
-    if (!previous || record.expiryDate > previous.expiryDate || (record.expiryDate === previous.expiryDate && record.createdAt > previous.createdAt)) latest.set(key, record);
+    if (!previous || (record.expiryDate && previous.expiryDate
+      ? record.expiryDate > previous.expiryDate || (record.expiryDate === previous.expiryDate && record.createdAt > previous.createdAt)
+      : record.createdAt > previous.createdAt)) latest.set(key, record);
   }
   const currentRecords = Array.from(latest.values());
   const listedRecords = showHistory ? compliance : currentRecords;
@@ -247,8 +249,9 @@ export const ComplianceView: React.FC = () => {
                 </tr>
               ) : (
                 records.map((c) => {
-                  const expiryMs = new Date(c.expiryDate).getTime();
-                  const diffDays = Math.ceil((expiryMs - now) / (1000 * 60 * 60 * 24));
+                  const diffDays = c.expiryDate
+                    ? Math.ceil((new Date(c.expiryDate).getTime() - now) / (1000 * 60 * 60 * 24))
+                    : null;
 
                   return (
                     <tr key={c.id} className="hover:bg-[#F9FBFC] transition-colors">
@@ -275,14 +278,14 @@ export const ComplianceView: React.FC = () => {
 
                       {/* Expiry Date */}
                       <td className="py-3 px-3">
-                        <div className="font-medium text-[#24313A]">{c.expiryDate}</div>
-                        <div className={`text-[10px] font-semibold ${
+                        <div className="font-medium text-[#24313A]">{c.expiryDate || 'Not applicable'}</div>
+                        {diffDays != null && <div className={`text-[10px] font-semibold ${
                           diffDays < 0 ? 'text-[#B9534F]' : diffDays <= 30 ? 'text-[#B86645]' : 'text-[#65727B]'
                         }`}>
                           {diffDays < 0
                             ? `Expired ${Math.abs(diffDays)} days ago`
                             : `${diffDays} days remaining`}
-                        </div>
+                        </div>}
                       </td>
 
                       {/* Premium */}

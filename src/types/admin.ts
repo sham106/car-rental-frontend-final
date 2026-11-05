@@ -41,7 +41,7 @@ export type ComplianceType =
   | 'MVL'
   | 'Licence';
 
-export type ComplianceStatus = 'Valid' | 'Expiring Soon' | 'Expired';
+export type ComplianceStatus = 'Valid' | 'Expiring Soon' | 'Expired' | 'No expiry date';
 
 export type DocumentType =
   | 'Insurance Certificate'
@@ -241,7 +241,7 @@ export interface ComplianceRecord {
   policyNumber?: string;
   premium?: number;
   issueDate: string; // YYYY-MM-DD
-  expiryDate: string; // YYYY-MM-DD
+  expiryDate?: string; // YYYY-MM-DD
   status: ComplianceStatus;
   documentUrl?: string;
   notes?: string;
