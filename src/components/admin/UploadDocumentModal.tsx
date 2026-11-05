@@ -76,7 +76,7 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
       setError('Please select a vehicle.');
       return;
     }
-    if (isCompliance && (!issueDate || !expiryDate)) { setError('Enter the issue and expiry dates for this certification.'); return; }
+    if (isCompliance && !issueDate) { setError('Enter the issue date for this certification.'); return; }
     if (issueDate && expiryDate && expiryDate < issueDate) { setError('Expiry must be on or after issue date.'); return; }
     if (documentType === 'Insurance Certificate' && (!company.trim() || !policyNumber.trim() || premium === '')) { setError('Enter the insurance company, policy number and premium. Enter 0 if there is no premium.'); return; }
     if (!selectedFile) { setError('Select a PDF or image to upload.'); return; }
@@ -96,9 +96,9 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
         documentType,
         title: title.trim(),
         issueDate,
-        expiryDate,
+        ...(expiryDate ? { expiryDate } : {}),
         fileId: uploaded.id,
-        ...(isCompliance ? { compliance: { company: company.trim(), broker: documentType === 'Insurance Certificate' ? broker.trim() : '', policyNumber: policyNumber.trim(), premium: documentType === 'Insurance Certificate' ? Number(premium) : 0 } } : {}),
+        ...(isCompliance && expiryDate ? { compliance: { company: company.trim(), broker: documentType === 'Insurance Certificate' ? broker.trim() : '', policyNumber: policyNumber.trim(), premium: documentType === 'Insurance Certificate' ? Number(premium) : 0 } } : {}),
         notes: notes.trim(),
       });
       await onSuccess();
@@ -216,7 +216,6 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
               </label>
               <input
                 type="date"
-                required={isCompliance}
                 aria-label="Expiry date"
                 min={issueDate || undefined}
                 value={expiryDate}
